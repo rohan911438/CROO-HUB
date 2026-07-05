@@ -6,7 +6,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { mockNotifications } from '@/lib/mock-data';
-import { formatRelativeTime, cn } from '@/lib/utils';
+import { cn } from '@/lib/utils';
+import { RelativeTime } from '@/components/shared/relative-time';
 import { Notification } from '@/types';
 
 const typeIcons: Record<Notification['type'], typeof Bell> = {
@@ -56,7 +57,7 @@ export default function NotificationsPage() {
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-2">
                   <span className="text-sm font-medium">{n.title}</span>
-                  <span className="shrink-0 text-xs text-muted-foreground">{formatRelativeTime(n.createdAt)}</span>
+                  <RelativeTime date={n.createdAt} className="shrink-0 text-xs text-muted-foreground" />
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">{n.body}</p>
                 <div className="mt-2 flex items-center gap-2">

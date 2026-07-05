@@ -2,10 +2,12 @@
 
 import '@rainbow-me/rainbowkit/styles.css';
 import { WagmiProvider } from 'wagmi';
+import { baseSepolia } from 'wagmi/chains';
 import { RainbowKitProvider, darkTheme, lightTheme } from '@rainbow-me/rainbowkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useTheme } from 'next-themes';
 import { wagmiConfig } from '@/lib/wagmi';
+import { ExtensionErrorGuard } from './extension-error-guard';
 
 const queryClient = new QueryClient();
 
@@ -14,6 +16,7 @@ function RainbowKitThemeBridge({ children }: { children: React.ReactNode }) {
 
   return (
     <RainbowKitProvider
+      initialChain={baseSepolia}
       theme={
         theme === 'light'
           ? lightTheme({ accentColor: 'hsl(255 75% 56%)', borderRadius: 'medium' })
@@ -29,7 +32,10 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitThemeBridge>{children}</RainbowKitThemeBridge>
+        <RainbowKitThemeBridge>
+          <ExtensionErrorGuard />
+          {children}
+        </RainbowKitThemeBridge>
       </QueryClientProvider>
     </WagmiProvider>
   );

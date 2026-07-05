@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { mockAgents, mockTransactions, mockNotifications } from '@/lib/mock-data';
-import { formatRelativeTime, initials } from '@/lib/utils';
+import { initials } from '@/lib/utils';
+import { RelativeTime } from '@/components/shared/relative-time';
 
 const quickActions = [
   { href: '/discovery', label: 'Discover an agent', description: 'Describe a task, get ranked matches', icon: Compass },
@@ -136,7 +137,7 @@ export default function OverviewPage() {
                 <div className="text-sm font-medium">{n.title}</div>
                 <div className="text-xs text-muted-foreground">{n.body}</div>
               </div>
-              <span className="shrink-0 text-xs text-muted-foreground">{formatRelativeTime(n.createdAt)}</span>
+              <RelativeTime date={n.createdAt} className="shrink-0 text-xs text-muted-foreground" />
             </div>
           ))}
         </CardContent>
