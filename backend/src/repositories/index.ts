@@ -1,0 +1,20 @@
+import { BaseRepository } from './BaseRepository';
+import { User, IUser } from '../models/User';
+import { Agent, IAgent } from '../models/Agent';
+import { Workflow, IWorkflow } from '../models/Workflow';
+import { Template, ITemplate } from '../models/Template';
+import { Review, IReview } from '../models/Review';
+import { Transaction, ITransaction } from '../models/Transaction';
+import { Notification, INotification } from '../models/Notification';
+import { Organization, IOrganization } from '../models/Organization';
+import { Setting, ISetting } from '../models/Setting';
+
+export const userRepository = new BaseRepository<IUser>(User);
+export const agentRepository = new BaseRepository<IAgent>(Agent);
+export const workflowRepository = new BaseRepository<IWorkflow>(Workflow);
+export const templateRepository = new BaseRepository<ITemplate>(Template);
+export const reviewRepository = new BaseRepository<IReview>(Review);
+export const transactionRepository = new BaseRepository<ITransaction>(Transaction);
+export const notificationRepository = new BaseRepository<INotification>(Notification);
+export const organizationRepository = new BaseRepository<IOrganization>(Organization);
+export const settingRepository = new BaseRepository<ISetting>(Setting);
