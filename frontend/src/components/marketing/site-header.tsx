@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Menu, X, Bot } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { WalletButton } from '@/components/shared/wallet-button';
 
 const links = [
   { href: '#how-it-works', label: 'How it works' },
@@ -45,12 +45,7 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 md:flex">
-          <Button variant="ghost" asChild>
-            <Link href="/sign-in">Sign in</Link>
-          </Button>
-          <Button variant="gradient" asChild>
-            <Link href="/sign-up">Get started</Link>
-          </Button>
+          <WalletButton />
         </div>
 
         <button className="md:hidden" onClick={() => setOpen(!open)} aria-label="Toggle menu">
@@ -67,12 +62,7 @@ export function SiteHeader() {
               </a>
             ))}
             <div className="flex flex-col gap-2 pt-2">
-              <Button variant="outline" asChild>
-                <Link href="/sign-in">Sign in</Link>
-              </Button>
-              <Button variant="gradient" asChild>
-                <Link href="/sign-up">Get started</Link>
-              </Button>
+              <WalletButton />
             </div>
           </div>
         </div>
