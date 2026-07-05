@@ -134,6 +134,7 @@ Demo login (after seeding): **demo@croohub.ai** / **Password123!**
 | Variable | Description |
 |---|---|
 | `NEXT_PUBLIC_API_URL` | Base URL of the backend API (`http://localhost:5000/api/v1`) |
+| `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` | WalletConnect Cloud project ID (free, from [cloud.walletconnect.com](https://cloud.walletconnect.com)) used by the wallet-connect modal |
 
 ## Seeding the database
 
@@ -187,6 +188,22 @@ docker compose up --build
 Spins up MongoDB, the backend on `:5000`, and the frontend on `:3000`. Set real secrets in
 `backend/.env` / `frontend/.env` before using this outside local development.
 
+## Wallet connection (Base Sepolia testnet)
+
+The frontend includes a real EVM wallet connection using **wagmi + RainbowKit**, configured for **Base
+Sepolia** (chain id `84532`). It supports MetaMask, Coinbase Wallet, Rainbow, and any WalletConnect-compatible
+wallet out of the box.
+
+- Config: `frontend/src/lib/wagmi.ts`
+- Provider: `frontend/src/components/shared/web3-provider.tsx` (wraps the app in `layout.tsx`)
+- UI: `frontend/src/components/shared/wallet-button.tsx` — used in the dashboard topbar and in
+  **Settings → Wallet**
+- Set `NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID` in `frontend/.env` (get a free ID at
+  [cloud.walletconnect.com](https://cloud.walletconnect.com)) — without it, WalletConnect-based wallets won't
+  connect, though injected wallets like MetaMask still will.
+
+This is **connection only** — no smart contracts are deployed yet. See below for the planned on-chain layer.
+
 ## Future integration points
 
 The following are modeled end-to-end (schema, API, UI) but intentionally mocked — the seams are designed so
@@ -199,8 +216,9 @@ each can be swapped in without frontend changes:
   every transaction as off-chain/mocked.
 - **Escrow** — `Transaction.escrow` models hold/release state; wiring a real escrow contract only requires
   changing `markTransactionCompleted` and the release trigger.
-- **Wallets & agent-to-agent payments** — `Agent.pricing` and `Transaction.amount/currency` are chain-agnostic
-  today (USDC-denominated placeholders); swapping to real wallet addresses/signatures is additive.
+- **Agent-to-agent payments** — `Agent.pricing` and `Transaction.amount/currency` are chain-agnostic today
+  (USDC-denominated placeholders). Wallet *connection* is already live (see above); what's still missing is
+  an on-chain Agent Registry, Reputation, and Escrow contract set on Base Sepolia to back real settlement.
 - **Live orchestration execution** — `workflow.service.ts#simulateExecution` generates a mocked step-by-step
   log; replacing it with real agent dispatch requires no schema changes to `Workflow.nodes/edges`.
 - **Real discovery/recommendation model** — `discoverAgentsMock` uses a deterministic keyword + reputation
