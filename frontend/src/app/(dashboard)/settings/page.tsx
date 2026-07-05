@@ -1,9 +1,11 @@
 'use client';
 
 import { useState } from 'react';
+import { useAccount, useDisconnect } from 'wagmi';
 import { useTheme } from 'next-themes';
 import { toast } from 'sonner';
-import { Moon, Sun, Monitor, Shield, Plug, Building2, Users, Bell, Palette, KeyRound } from 'lucide-react';
+import { Moon, Sun, Monitor, Shield, Plug, Building2, Users, Bell, Palette, KeyRound, Wallet as WalletIcon } from 'lucide-react';
+import { WalletButton } from '@/components/shared/wallet-button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
@@ -32,6 +34,8 @@ const accentColors = ['violet', 'blue', 'emerald', 'amber', 'rose'];
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme();
+  const { address, isConnected, chain } = useAccount();
+  const { disconnect } = useDisconnect();
   const [accent, setAccent] = useState('violet');
   const [density, setDensity] = useState<'comfortable' | 'compact'>('comfortable');
   const [notifPrefs, setNotifPrefs] = useState({ email: true, push: true, workflow: true, transaction: true, digest: false });
@@ -54,6 +58,7 @@ export default function SettingsPage() {
           <TabsTrigger value="appearance"><Palette className="h-3.5 w-3.5" /> Appearance</TabsTrigger>
           <TabsTrigger value="security"><Shield className="h-3.5 w-3.5" /> Security</TabsTrigger>
           <TabsTrigger value="connections"><Plug className="h-3.5 w-3.5" /> Connections</TabsTrigger>
+          <TabsTrigger value="wallet"><WalletIcon className="h-3.5 w-3.5" /> Wallet</TabsTrigger>
         </TabsList>
 
         <TabsContent value="organization">
@@ -266,6 +271,43 @@ export default function SettingsPage() {
                   </Button>
                 </div>
               ))}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="wallet">
+          <Card>
+            <CardHeader>
+              <CardTitle>Wallet</CardTitle>
+              <CardDescription>
+                Connect an EVM wallet on Base Sepolia testnet. On-chain agent registry, reputation, and
+                escrow contracts are not wired up yet — this only establishes the connection.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {isConnected && address ? (
+                <div className="flex flex-col gap-4 rounded-xl border border-border p-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <div className="text-xs text-muted-foreground">Connected address</div>
+                    <div className="font-mono text-sm">{address}</div>
+                    <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                      {chain?.name ?? 'Unknown network'}
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => disconnect()}>
+                    Disconnect
+                  </Button>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-border p-6 text-center">
+                  <p className="text-sm text-muted-foreground">No wallet connected yet.</p>
+                </div>
+              )}
+              <WalletButton />
+              <p className="text-xs text-muted-foreground">
+                Supports MetaMask, Coinbase Wallet, Rainbow, and any WalletConnect-compatible EVM wallet.
+              </p>
             </CardContent>
           </Card>
         </TabsContent>

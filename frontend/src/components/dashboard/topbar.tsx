@@ -20,6 +20,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { mockNotifications } from '@/lib/mock-data';
 import { MobileNav } from './mobile-nav';
+import { WalletButton } from '@/components/shared/wallet-button';
 
 const titles: Record<string, string> = {
   '/dashboard': 'Overview',
@@ -66,6 +67,8 @@ export function Topbar() {
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input placeholder="Search agents, workflows…" className="h-9 w-64 pl-9" />
           </div>
+
+          <WalletButton compact />
 
           <Button
             variant="ghost"
