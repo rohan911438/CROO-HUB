@@ -6,6 +6,7 @@ import { discoverAgents } from './discovery.service';
 import { appendEvent, setStatus } from './planner/orderContext';
 import { runSimulatedExecution } from './planner/simulatedExecutor';
 import { runLiveExecution, LiveExecutionUnavailable } from './planner/liveExecutor';
+import { buildReasoningReport } from './planner/reasoning';
 import { recordOrderOutcome } from './reputationAnalytics.service';
 import {
   anchorExecution,
@@ -85,27 +86,40 @@ async function runOrder(orderId: string): Promise<void> {
       return;
     }
 
-    order.candidates = matches.map((m, i) => ({
-      agentId: new Types.ObjectId(m.agentId),
-      slug: m.slug,
-      name: m.name,
-      matchScore: m.matchScore,
-      trustScore: m.trustScore,
-      estimatedCostUsd: m.estimatedCostUsd,
-      reasoning: m.reasoning,
-      chosen: i === 0,
-    }));
+    // Build a fully explainable reasoning report for the top few candidates (not just the
+    // winner), so the UI can show judges why the Planner picked one agent over its runners-up.
+    const REASONED_CANDIDATE_COUNT = 4;
+    const topMatches = matches.slice(0, REASONED_CANDIDATE_COUNT);
+    const candidateAgents = await Agent.find({ _id: { $in: topMatches.map((m) => m.agentId) } });
+    const agentById = new Map(candidateAgents.map((a) => [a.id, a]));
+
+    order.candidates = matches.map((m, i) => {
+      const candidateAgent = agentById.get(m.agentId);
+      return {
+        agentId: new Types.ObjectId(m.agentId),
+        slug: m.slug,
+        name: m.name,
+        matchScore: m.matchScore,
+        trustScore: m.trustScore,
+        estimatedCostUsd: m.estimatedCostUsd,
+        reasoning: m.reasoning,
+        chosen: i === 0,
+        reasoningReport: candidateAgent ? buildReasoningReport(m, candidateAgent, order.budget, order.maxLatencyMs) : undefined,
+      };
+    });
     order.selectedAgent = new Types.ObjectId(matches[0].agentId);
     await order.save();
+
+    const winnerReport = order.candidates[0].reasoningReport;
     await appendEvent(
       order,
       'discovery_completed',
-      `Found ${matches.length} candidate agent(s); selected "${matches[0].name}" (${matches[0].matchScore}% match) - ${matches[0].reasoning}`,
+      winnerReport?.summary ?? `Found ${matches.length} candidate agent(s); selected "${matches[0].name}" (${matches[0].matchScore}% match).`,
       'success',
       { candidates: matches.map((m) => ({ slug: m.slug, matchScore: m.matchScore })) },
     );
 
-    const provider = await Agent.findById(matches[0].agentId);
+    const provider = agentById.get(matches[0].agentId) ?? (await Agent.findById(matches[0].agentId));
     if (!provider) throw new Error('Selected candidate agent no longer exists');
 
     if (order.executionMode === 'live') {
@@ -135,9 +149,23 @@ async function runOrder(orderId: string): Promise<void> {
 
     if (finalOrder.status === 'completed') {
       await recordOrderOutcome(provider, true, finalOrder.latencyMs ?? 0);
+      await appendEvent(
+        finalOrder,
+        'reputation_updated',
+        `"${provider.name}" reputation recalculated: ${provider.reputationScore}/100 (${provider.performance.completedJobs} jobs, ${provider.performance.successRate}% success rate).`,
+        'success',
+        { reputationScore: provider.reputationScore, completedJobs: provider.performance.completedJobs },
+      );
       await tryAnchorExecution(finalOrder);
     } else if (finalOrder.status === 'rejected' || finalOrder.status === 'expired') {
       await recordOrderOutcome(provider, false, finalOrder.latencyMs ?? 0);
+      await appendEvent(
+        finalOrder,
+        'reputation_updated',
+        `"${provider.name}" reputation recalculated after an unsuccessful order: ${provider.reputationScore}/100.`,
+        'warning',
+        { reputationScore: provider.reputationScore },
+      );
     }
   } catch (err) {
     console.error('[planner] order failed', orderId, err);

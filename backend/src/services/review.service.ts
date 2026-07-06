@@ -1,6 +1,7 @@
 import { Review } from '../models/Review';
 import { Agent } from '../models/Agent';
 import { AppError } from '../utils/AppError';
+import { recomputeReputationScore } from './reputationAnalytics.service';
 
 export async function listReviewsForAgent(agentSlug: string) {
   const agent = await Agent.findOne({ slug: agentSlug });
@@ -17,11 +18,7 @@ export async function createReview(
   if (!agent) throw AppError.notFound('Agent not found');
 
   const review = await Review.create({ agent: agent._id, author, ...input });
-
-  const reviews = await Review.find({ agent: agent._id });
-  const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length;
-  agent.reputationScore = Math.round(avg * 20);
-  await agent.save();
+  await recomputeReputationScore(agent);
 
   return review;
 }

@@ -21,10 +21,12 @@ export interface DiscoveryMatch {
 }
 
 /**
- * Mocked recommendation engine. Ranks agents using a deterministic heuristic
- * derived from keyword overlap + stored reputation/performance data so the
- * UI can be built against realistic-looking output. Replace with a real
- * embedding/LLM-based matcher when the CROO CAP recommendation service ships.
+ * Real recommendation engine: ranks live MongoDB `Agent` records using a deterministic heuristic
+ * (keyword overlap + stored reputation/performance data). This is the same engine
+ * `planner.service.ts` calls to select a candidate for Agent Commerce orders - "mocked" here
+ * would mean fabricated data, which this is not. It is a hand-tuned heuristic rather than an
+ * embedding/LLM-based matcher; that upgrade is a future roadmap item (see
+ * CROO_CAP_COMPATIBILITY_REPORT.md), not a correctness gap in what's shipped today.
  */
 export async function discoverAgents(request: DiscoveryRequest): Promise<DiscoveryMatch[]> {
   const keywords = request.taskDescription

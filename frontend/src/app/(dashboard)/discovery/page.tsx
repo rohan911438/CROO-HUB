@@ -11,7 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Skeleton } from '@/components/ui/skeleton';
-import { discoverAgentsMock } from '@/lib/discovery';
+import { api, ApiError } from '@/lib/api';
 import { DiscoveryMatch } from '@/types';
 import { initials } from '@/lib/utils';
 
@@ -26,14 +26,21 @@ export default function DiscoveryPage() {
   const [task, setTask] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<DiscoveryMatch[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleDiscover() {
     if (!task.trim()) return;
     setLoading(true);
     setResults(null);
-    await new Promise((r) => setTimeout(r, 900));
-    setResults(discoverAgentsMock(task));
-    setLoading(false);
+    setError(null);
+    try {
+      const matches = await api.discovery.discover({ taskDescription: task });
+      setResults(matches as DiscoveryMatch[]);
+    } catch (err) {
+      setError(err instanceof ApiError ? err.message : 'Discovery failed');
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -161,7 +168,17 @@ export default function DiscoveryPage() {
         )}
       </AnimatePresence>
 
-      {!results && !loading && (
+      {error && (
+        <div className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{error}</div>
+      )}
+
+      {results && results.length === 0 && !loading && (
+        <div className="rounded-2xl border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
+          No available agents matched this task yet.
+        </div>
+      )}
+
+      {!results && !loading && !error && (
         <div className="rounded-2xl border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
           Describe a task above to see intelligently ranked agent recommendations.
         </div>

@@ -129,6 +129,64 @@ export interface Notification {
   createdAt: string;
 }
 
+// --- Agent Commerce / Planner (backend/src/models/AgentOrder.ts) ---
+
+export type OrderStatus =
+  | 'planning' | 'negotiating' | 'accepted' | 'paid' | 'running' | 'delivering'
+  | 'completed' | 'rejected' | 'expired' | 'failed' | 'cancelled';
+
+export interface OrderEvent {
+  timestamp: string;
+  type: string;
+  level: 'info' | 'success' | 'warning' | 'error';
+  message: string;
+}
+
+export interface ReasoningFactor {
+  label: string;
+  detail: string;
+  weight: number;
+  score: number;
+}
+
+export interface ReasoningReport {
+  confidenceScore: number;
+  factors: ReasoningFactor[];
+  workflowCompatible: boolean;
+  workflowCompatibilityNote: string;
+  summary: string;
+}
+
+export interface OrderCandidate {
+  slug: string;
+  name: string;
+  matchScore: number;
+  trustScore: number;
+  estimatedCostUsd: number;
+  reasoning: string;
+  chosen: boolean;
+  reasoningReport?: ReasoningReport;
+}
+
+export interface AgentOrder {
+  _id: string;
+  taskDescription: string;
+  budget?: number;
+  executionMode: 'live' | 'simulated';
+  requestedMode: 'auto' | 'live' | 'simulated';
+  status: OrderStatus;
+  candidates: OrderCandidate[];
+  cap: { negotiationId?: string; orderId?: string; protocolVersion: string };
+  settlement: { amountUsdc?: number; feeUsdc?: number; payTxHash?: string; deliverTxHash?: string; clearTxHash?: string };
+  result?: { deliverableType: string; deliverableText?: string; contentHash?: string };
+  onchainProof?: { network: string; contractAddress: string; executionId: string; txHash: string; explorerUrl: string; recordedAt: string };
+  events: OrderEvent[];
+  retryCount: number;
+  maxRetries: number;
+  latencyMs?: number;
+  createdAt: string;
+}
+
 export interface ApiKey {
   name: string;
   keyPreview: string;

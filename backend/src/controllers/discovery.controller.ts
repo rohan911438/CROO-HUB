@@ -5,5 +5,5 @@ import { discoverAgents } from '../services/discovery.service';
 
 export const discover = asyncHandler(async (req: Request, res: Response) => {
   const matches = await discoverAgents(req.body);
-  return ok(res, matches, { engine: 'mocked-heuristic-v1' });
+  return ok(res, matches, { engine: 'heuristic-v1' });
 });

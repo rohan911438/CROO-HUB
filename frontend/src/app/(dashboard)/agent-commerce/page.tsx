@@ -23,50 +23,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Progress } from '@/components/ui/progress';
+import { Accordion, AccordionItem, AccordionTrigger, AccordionContent } from '@/components/ui/accordion';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { api, ApiError } from '@/lib/api';
 import { getAccessToken } from '@/lib/auth';
-
-type OrderStatus =
-  | 'planning' | 'negotiating' | 'accepted' | 'paid' | 'running' | 'delivering'
-  | 'completed' | 'rejected' | 'expired' | 'failed' | 'cancelled';
-
-interface OrderEvent {
-  timestamp: string;
-  type: string;
-  level: 'info' | 'success' | 'warning' | 'error';
-  message: string;
-}
-
-interface OrderCandidate {
-  slug: string;
-  name: string;
-  matchScore: number;
-  trustScore: number;
-  estimatedCostUsd: number;
-  reasoning: string;
-  chosen: boolean;
-}
-
-interface AgentOrder {
-  _id: string;
-  taskDescription: string;
-  budget?: number;
-  executionMode: 'live' | 'simulated';
-  requestedMode: 'auto' | 'live' | 'simulated';
-  status: OrderStatus;
-  candidates: OrderCandidate[];
-  cap: { negotiationId?: string; orderId?: string; protocolVersion: string };
-  settlement: { amountUsdc?: number; feeUsdc?: number; payTxHash?: string; deliverTxHash?: string; clearTxHash?: string };
-  result?: { deliverableType: string; deliverableText?: string; contentHash?: string };
-  onchainProof?: { network: string; contractAddress: string; executionId: string; txHash: string; explorerUrl: string; recordedAt: string };
-  events: OrderEvent[];
-  retryCount: number;
-  maxRetries: number;
-  latencyMs?: number;
-  createdAt: string;
-}
+import { AgentOrder, OrderStatus } from '@/types';
+import { ExecutionGraph } from '@/components/agent-commerce/execution-graph';
 
 const TERMINAL: OrderStatus[] = ['completed', 'rejected', 'expired', 'failed', 'cancelled'];
 
@@ -246,23 +210,65 @@ export default function AgentCommercePage() {
                 </div>
               </CardHeader>
               <CardContent className="space-y-5">
+                <div>
+                  <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Execution graph</div>
+                  <ExecutionGraph order={selected} />
+                </div>
+
                 {selected.candidates.length > 0 && (
                   <div>
-                    <div className="mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">Planner discovery</div>
-                    <div className="space-y-1.5">
-                      {selected.candidates.slice(0, 4).map((c) => (
-                        <div key={c.slug} className={`flex items-center justify-between rounded-lg border p-2 text-xs ${c.chosen ? 'border-primary/40 bg-primary/5' : 'border-border'}`}>
-                          <div className="flex items-center gap-2">
-                            {c.chosen && <ShieldCheck className="h-3.5 w-3.5 text-primary" />}
-                            <span className="font-medium">{c.name}</span>
-                          </div>
-                          <div className="flex items-center gap-3 text-muted-foreground">
-                            <span>{c.matchScore}% match</span>
-                            <span>${c.estimatedCostUsd.toFixed(2)}</span>
-                          </div>
-                        </div>
-                      ))}
+                    <div className="mb-2 flex items-center justify-between text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      <span>Planner reasoning</span>
+                      <span className="normal-case text-muted-foreground/70">Why this agent, not the runners-up</span>
                     </div>
+                    <Accordion type="single" collapsible defaultValue={selected.candidates[0]?.slug}>
+                      {selected.candidates.slice(0, 4).map((c) => (
+                        <AccordionItem key={c.slug} value={c.slug} className={c.chosen ? 'bg-primary/5' : ''}>
+                          <AccordionTrigger className="px-2 py-2.5 hover:no-underline">
+                            <div className="flex flex-1 items-center justify-between pr-2 text-xs">
+                              <div className="flex items-center gap-2">
+                                {c.chosen && <ShieldCheck className="h-3.5 w-3.5 shrink-0 text-primary" />}
+                                <span className="font-medium text-foreground">{c.name}</span>
+                                {c.reasoningReport && (
+                                  <Badge variant={c.chosen ? 'success' : 'outline'} className="text-[10px]">
+                                    {c.reasoningReport.confidenceScore}% confidence
+                                  </Badge>
+                                )}
+                              </div>
+                              <div className="flex items-center gap-3 text-muted-foreground">
+                                <span>{c.matchScore}% match</span>
+                                <span>${c.estimatedCostUsd.toFixed(2)}</span>
+                              </div>
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent className="px-2">
+                            {c.reasoningReport ? (
+                              <div className="space-y-2">
+                                <p className="text-xs">{c.reasoningReport.summary}</p>
+                                <div className="space-y-1.5">
+                                  {c.reasoningReport.factors.map((f) => (
+                                    <div key={f.label} className="space-y-0.5">
+                                      <div className="flex items-center justify-between text-[11px]">
+                                        <span className="text-foreground/80">{f.label} <span className="text-muted-foreground">({Math.round(f.weight * 100)}% weight)</span></span>
+                                        <span className="font-mono">{f.score}/100</span>
+                                      </div>
+                                      <Progress value={f.score} className="h-1.5" />
+                                      <p className="text-[11px] text-muted-foreground">{f.detail}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className={`flex items-center gap-1.5 rounded-md p-2 text-[11px] ${c.reasoningReport.workflowCompatible ? 'bg-success/10 text-success' : 'bg-warning/10 text-warning'}`}>
+                                  {c.reasoningReport.workflowCompatible ? <CheckCircle2 className="h-3 w-3 shrink-0" /> : <AlertTriangle className="h-3 w-3 shrink-0" />}
+                                  {c.reasoningReport.workflowCompatibilityNote}
+                                </div>
+                              </div>
+                            ) : (
+                              <p className="text-xs">{c.reasoning}</p>
+                            )}
+                          </AccordionContent>
+                        </AccordionItem>
+                      ))}
+                    </Accordion>
                   </div>
                 )}
 

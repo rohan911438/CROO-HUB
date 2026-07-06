@@ -34,6 +34,21 @@ export interface IOrderEvent {
   meta?: Record<string, unknown>;
 }
 
+export interface IReasoningFactor {
+  label: string;
+  detail: string;
+  weight: number;
+  score: number;
+}
+
+export interface IReasoningReport {
+  confidenceScore: number;
+  factors: IReasoningFactor[];
+  workflowCompatible: boolean;
+  workflowCompatibilityNote: string;
+  summary: string;
+}
+
 export interface IOrderCandidate {
   agentId: Types.ObjectId;
   slug: string;
@@ -43,6 +58,7 @@ export interface IOrderCandidate {
   estimatedCostUsd: number;
   reasoning: string;
   chosen: boolean;
+  reasoningReport?: IReasoningReport;
 }
 
 export interface IAgentOrder extends Document {
@@ -106,6 +122,27 @@ const orderEventSchema = new Schema<IOrderEvent>(
   { _id: false },
 );
 
+const reasoningFactorSchema = new Schema<IReasoningFactor>(
+  {
+    label: { type: String, required: true },
+    detail: { type: String, required: true },
+    weight: { type: Number, required: true },
+    score: { type: Number, required: true },
+  },
+  { _id: false },
+);
+
+const reasoningReportSchema = new Schema<IReasoningReport>(
+  {
+    confidenceScore: { type: Number, required: true },
+    factors: [reasoningFactorSchema],
+    workflowCompatible: { type: Boolean, required: true },
+    workflowCompatibilityNote: { type: String, required: true },
+    summary: { type: String, required: true },
+  },
+  { _id: false },
+);
+
 const orderCandidateSchema = new Schema<IOrderCandidate>(
   {
     agentId: { type: Schema.Types.ObjectId, ref: 'Agent', required: true },
@@ -116,6 +153,7 @@ const orderCandidateSchema = new Schema<IOrderCandidate>(
     estimatedCostUsd: { type: Number, required: true },
     reasoning: { type: String, required: true },
     chosen: { type: Boolean, default: false },
+    reasoningReport: { type: reasoningReportSchema },
   },
   { _id: false },
 );

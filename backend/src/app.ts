@@ -10,6 +10,7 @@ import { swaggerSpec } from './config/swagger';
 import routes from './routes';
 import { apiRateLimiter } from './middleware/rateLimiter';
 import { errorHandler, notFoundHandler } from './middleware/errorHandler';
+import { requestLogger } from './middleware/requestLogger';
 
 export function createApp(): Application {
   const app = express();
@@ -21,6 +22,7 @@ export function createApp(): Application {
   app.use(express.urlencoded({ extended: true }));
   app.use(cookieParser());
   app.use(morgan(env.isProduction ? 'combined' : 'dev'));
+  app.use(requestLogger);
   app.use('/api', apiRateLimiter);
 
   app.get('/', (_req, res) => {

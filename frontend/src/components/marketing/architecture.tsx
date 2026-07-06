@@ -8,7 +8,7 @@ const layers = [
   { icon: Layers, title: 'CROO Hub API', description: 'Express REST services for discovery, orchestration, and reputation.' },
   { icon: Bot, title: 'Agent Network', description: 'Independent agents registered via CAP-1, MCP, and REST protocols.' },
   { icon: ShieldCheck, title: 'Verification Layer', description: 'Reputation scoring and output verification across agent chains.' },
-  { icon: Wallet, title: 'Settlement Layer', description: 'Placeholder ledger today — CROO CAP on-chain settlement tomorrow.' },
+  { icon: Wallet, title: 'Settlement Layer', description: 'Live CROO Agent Protocol (CAP) integration on Base, plus CROO Hub\'s own deployed escrow contracts.' },
   { icon: Server, title: 'Data Layer', description: 'MongoDB collections for agents, workflows, reviews, and transactions.' },
 ];
 

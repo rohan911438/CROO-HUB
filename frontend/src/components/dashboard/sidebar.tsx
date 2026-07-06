@@ -24,6 +24,7 @@ import {
   ChevronsRight,
   Network,
   Handshake,
+  Layers,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
@@ -43,6 +44,7 @@ const nav = [
     { href: '/transactions', label: 'Transactions', icon: Wallet },
   ]},
   { section: 'Developer', items: [
+    { href: '/architecture', label: 'Architecture', icon: Layers },
     { href: '/api-keys', label: 'API Keys', icon: KeyRound },
     { href: '/dev-console', label: 'Developer Console', icon: Terminal },
     { href: '/croo-integration', label: 'CROO Integration', icon: Network },

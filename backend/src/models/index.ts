@@ -1,6 +1,7 @@
 export * from './User';
 export * from './Organization';
 export * from './Agent';
+export * from './AgentOrder';
 export * from './Workflow';
 export * from './Template';
 export * from './Review';
