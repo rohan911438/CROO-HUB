@@ -10,6 +10,7 @@ import notificationRoutes from './notification.routes';
 import organizationRoutes from './organization.routes';
 import settingRoutes from './setting.routes';
 import capRoutes from './cap.routes';
+import orderRoutes from './order.routes';
 
 const router = Router();
 
@@ -24,6 +25,7 @@ router.use('/notifications', notificationRoutes);
 router.use('/organizations', organizationRoutes);
 router.use('/settings', settingRoutes);
 router.use('/cap', capRoutes);
+router.use('/orders', orderRoutes);
 
 router.get('/health', (_req, res) => res.json({ success: true, status: 'ok', timestamp: new Date() }));
 

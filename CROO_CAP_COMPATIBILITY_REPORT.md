@@ -208,3 +208,100 @@ server behavior):
   Agent to act as counterparty (see §1's confirmed flow diagram) and real USDC; that's a
   deliberate follow-up, not something to trigger silently during an integration build.
 - **No changes to any `.sol` contract** — confirmed unnecessary per the §2 audit.
+
+---
+
+## 6. Agent Commerce: end-to-end Planner-driven order execution
+
+A second research pass (same date) re-confirmed no new endpoints, no SDK update
+(`@croo-network/sdk` still `0.2.1`), and no new docs pages (still 23) since §1-5 were written.
+One new fact matters a lot: **the CROO Network marketplace has zero registered services from
+anyone**, not just CROO Hub - `agent.croo.network` still shows 0 agents/0 orders/$0 volume
+network-wide, and the SDK exposes no `listServices`/`searchServices` method at all. A requester
+is expected to already know a `serviceId`; there is no programmatic way to find one. That single
+fact drives everything below.
+
+### Architecture
+
+```
+Planner (services/planner.service.ts)
+  -> Discovery Engine (services/discovery.service.ts, unchanged, real Mongo Agent data)
+  -> AgentOrder (models/AgentOrder.ts) - persisted after every state transition
+  -> executor adapter, chosen per order:
+       - services/planner/liveExecutor.ts   (real CAP SDK calls: negotiateOrder/payOrder/
+                                              getOrder/getDelivery, bounded polling, no discovery)
+       - services/planner/simulatedExecutor.ts (local, deterministic, clearly-labeled timings)
+  -> on completion:
+       - reputationAnalytics.service.ts  (off-chain Agent.reputationScore/performance update)
+       - services/chain/orchestrationClient.ts (real Base Sepolia anchoring via the already-
+         deployed OrchestrationMetadata contract - a complementary trust layer, not a CAP
+         requirement)
+```
+
+The Planner never talks to CAP or the chain directly - it only calls the executor and the
+anchoring client, both swappable behind their own small interfaces. This mirrors the isolation
+principle from §2: adapters absorb protocol limitations, not the orchestrator.
+
+### Why simulated is the default, and what "simulated" actually means here
+
+`decideExecutionMode()` only attempts `live` when the caller supplies a real `targetServiceId` -
+there being no discovery API, there is nothing else to target. Since nobody on the network has
+registered a service, every order today runs `simulated` by default. But "simulated" is narrower
+than it sounds:
+
+| Layer | Simulated mode | Live mode |
+|---|---|---|
+| Negotiation/accept/pay/deliver timing & events | Local, fake ids prefixed `sim_` | Real CAP SDK calls, real ids |
+| MongoDB persistence (`AgentOrder`, event history) | Real | Real |
+| Off-chain reputation analytics | Real | Real |
+| **On-chain execution proof** (Base Sepolia, `OrchestrationMetadata.recordExecution`) | **Real** | **Real** |
+
+The on-chain anchoring step is identical in both modes and always real - it's a proof that "the
+Planner ran this task and reached this outcome," independent of which settlement rail handled the
+(possibly fake, possibly real) payment. Verified live during this build: 4 real
+`recordExecution` transactions on Base Sepolia, each producing a genuine, incrementing
+`executionId` and a real Basescan-visible transaction (e.g. execution #4,
+`0xa60527749229d1569f5b13aa74236174da3eecd486f7f76eb0d9729194f309fc`).
+
+### Limitations encountered + workarounds (in the order found)
+
+1. **No service discovery API.** *Workaround*: `targetServiceId` is an optional, explicit input;
+   omitting it (the common case today) routes straight to the simulator instead of pretending to
+   search for something no API can return.
+2. **Live execution requires an independent second CROO Agent actively listening** (confirmed via
+   the Quick Start flow diagram in §1) **and the whole network currently has none.**
+   *Workaround*: `liveExecutor.ts` is implemented against the real documented SDK contract
+   (bounded polling, 45s negotiation timeout / 60s order timeout, no infinite waits) so it is
+   ready the moment a real service exists, but it has not been exercised against a live
+   counterparty - that's stated plainly here rather than claimed as tested.
+3. **`OrchestrationMetadata.recordExecution`'s `participatingAgents` expects real EVM addresses,
+   but CROO Hub's MongoDB Users/Agents have no linked wallet in this build.** *Workaround*: every
+   anchored execution records CROO Hub's own signer address as the sole participant - an honest
+   "the Planner recorded this" proof, not a fabricated claim that a specific end-user wallet
+   participated on-chain.
+4. **On-chain Reputation.sol only accepts writes from `EscrowCommerce` (`RECORDER_ROLE`), by
+   design** (see blockchain/README.md §5) - CAP/simulated orders never touch `EscrowCommerce`.
+   *Workaround*: Agent Commerce outcomes update a separate, explicitly off-chain analytics field
+   (`Agent.reputationScore`/`performance` in MongoDB) rather than weakening that contract's access
+   control or fabricating an escrow event that never happened. `Reputation.sol` remains the
+   single source of truth for CROO-Hub-native, on-chain-escrow-settled reputation.
+5. **Two bugs were found and fixed during live verification, not left in place**: the hand-copied
+   ABI fragment for anchoring was initially missing `getExecutionIdByWorkflowRef` entirely
+   (caught immediately by the order's own error handling, which logged it as a failed event
+   instead of crashing); and reading `executionId` back via a follow-up RPC call after `tx.wait()`
+   intermittently returned `0` against the public `sepolia.base.org` endpoint (a read-after-write
+   lag across a load-balanced node) - fixed by decoding `executionId` directly from the
+   transaction receipt's own event log, which needs no follow-up round trip and cannot lag.
+
+### Remaining integration opportunities / roadmap
+
+- **If CROO ever ships a service directory or search API**: `liveExecutor.ts` already expects a
+  `serviceId`; adding discovery only requires a new call inside `planner.service.ts`'s mode
+  decision, no executor changes.
+- **If a second CROO Agent becomes available** (registered by this team or a real third party):
+  set `requestedMode: 'live'` with its `serviceId` and the exact same order pipeline runs for
+  real, with the same MongoDB/dashboard/anchoring behavior - nothing else changes.
+- **Wallet linkage**: adding a real wallet-address field to `User`/`Agent` would let
+  `participatingAgents` record genuine per-user addresses instead of the platform signer,
+  strengthening the on-chain proof's specificity.
+- **CROO Merit bridging**: still no public API found for it; revisit if CROO documents one.

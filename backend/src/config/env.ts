@@ -34,5 +34,13 @@ export const env = {
       return this.sdkKey.length > 0;
     },
   },
+  agentCommerceChain: {
+    rpcUrl: process.env.BASE_SEPOLIA_RPC_URL ?? 'https://sepolia.base.org',
+    orchestrationMetadataAddress: process.env.ORCHESTRATION_METADATA_ADDRESS ?? '',
+    signerPrivateKey: process.env.AGENT_COMMERCE_SIGNER_PRIVATE_KEY ?? '',
+    get isConfigured() {
+      return this.orchestrationMetadataAddress.length > 0 && this.signerPrivateKey.length > 0;
+    },
+  },
   isProduction: process.env.NODE_ENV === 'production',
 };

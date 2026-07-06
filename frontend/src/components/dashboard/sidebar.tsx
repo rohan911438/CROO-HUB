@@ -23,6 +23,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   Network,
+  Handshake,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
@@ -32,6 +33,7 @@ const nav = [
     { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
     { href: '/marketplace', label: 'Agent Marketplace', icon: Store },
     { href: '/discovery', label: 'Discovery Engine', icon: Compass },
+    { href: '/agent-commerce', label: 'Agent Commerce', icon: Handshake },
     { href: '/orchestration', label: 'Orchestration Studio', icon: Workflow },
     { href: '/reputation', label: 'Reputation Center', icon: ShieldCheck },
     { href: '/templates', label: 'Workflow Templates', icon: GitBranch },

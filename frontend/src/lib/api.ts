@@ -57,6 +57,23 @@ export const api = {
     discover: (input: { taskDescription: string; budget?: number; maxLatencyMs?: number }) =>
       request('/discovery', { method: 'POST', body: JSON.stringify(input) }),
   },
+  orders: {
+    create: (
+      input: {
+        taskDescription: string;
+        budget?: number;
+        maxLatencyMs?: number;
+        requestedMode?: 'auto' | 'live' | 'simulated';
+        targetServiceId?: string;
+      },
+      token: string,
+    ) => request('/orders', { method: 'POST', body: JSON.stringify(input), token }),
+    list: (token: string, status?: string) =>
+      request(`/orders${status ? `?status=${status}` : ''}`, { token }),
+    get: (id: string, token: string) => request(`/orders/${id}`, { token }),
+    retry: (id: string, token: string) => request(`/orders/${id}/retry`, { method: 'POST', token }),
+    cancel: (id: string, token: string) => request(`/orders/${id}/cancel`, { method: 'POST', token }),
+  },
   cap: {
     status: () =>
       request<{
