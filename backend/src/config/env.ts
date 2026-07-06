@@ -25,5 +25,14 @@ export const env = {
     windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS ?? 900000),
     max: Number(process.env.RATE_LIMIT_MAX ?? 300),
   },
+  croo: {
+    apiUrl: process.env.CROO_API_URL ?? 'https://api.croo.network',
+    wsUrl: process.env.CROO_WS_URL ?? 'wss://api.croo.network/ws',
+    sdkKey: process.env.CROO_SDK_KEY ?? '',
+    rpcUrl: process.env.CROO_RPC_URL ?? 'https://mainnet.base.org',
+    get isConfigured() {
+      return this.sdkKey.length > 0;
+    },
+  },
   isProduction: process.env.NODE_ENV === 'production',
 };

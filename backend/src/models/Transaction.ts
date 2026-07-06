@@ -18,7 +18,7 @@ export interface ITransaction extends Document {
   status: TransactionStatus;
   description: string;
   invoiceNumber: string;
-  settlementMethod: 'placeholder_offchain' | 'on_chain_pending';
+  settlementMethod: 'placeholder_offchain' | 'on_chain_pending' | 'cap_settled';
   escrow: {
     isEscrow: boolean;
     releaseCondition?: string;
@@ -27,6 +27,16 @@ export interface ITransaction extends Document {
   };
   chainMeta?: {
     note: string;
+  };
+  /** Populated when settlementMethod is 'cap_settled' - see CROO_CAP_COMPATIBILITY_REPORT.md */
+  capMeta?: {
+    orderId: string;
+    negotiationId?: string;
+    chainOrderId?: string;
+    status: string;
+    payTxHash?: string;
+    deliverTxHash?: string;
+    clearTxHash?: string;
   };
   createdAt: Date;
   updatedAt: Date;
@@ -49,7 +59,7 @@ const transactionSchema = new Schema<ITransaction>(
     invoiceNumber: { type: String, required: true, unique: true },
     settlementMethod: {
       type: String,
-      enum: ['placeholder_offchain', 'on_chain_pending'],
+      enum: ['placeholder_offchain', 'on_chain_pending', 'cap_settled'],
       default: 'placeholder_offchain',
     },
     escrow: {
@@ -63,6 +73,15 @@ const transactionSchema = new Schema<ITransaction>(
         type: String,
         default: 'Blockchain settlement will be connected via CROO CAP in a future release.',
       },
+    },
+    capMeta: {
+      orderId: { type: String },
+      negotiationId: { type: String },
+      chainOrderId: { type: String },
+      status: { type: String },
+      payTxHash: { type: String },
+      deliverTxHash: { type: String },
+      clearTxHash: { type: String },
     },
   },
   { timestamps: true },

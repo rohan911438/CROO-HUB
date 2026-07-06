@@ -40,6 +40,11 @@ export interface IAgent extends Document {
   usageExamples: { title: string; code: string }[];
   bookmarkedBy: Types.ObjectId[];
   featured: boolean;
+  /** CROO Network (CAP) cross-reference - see CROO_CAP_COMPATIBILITY_REPORT.md */
+  crooAgentId?: string;
+  crooServiceId?: string;
+  crooSyncStatus: 'unlinked' | 'linked' | 'error';
+  crooLastSyncedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -102,6 +107,10 @@ const agentSchema = new Schema<IAgent>(
     ],
     bookmarkedBy: [{ type: Schema.Types.ObjectId, ref: 'User' }],
     featured: { type: Boolean, default: false },
+    crooAgentId: { type: String },
+    crooServiceId: { type: String },
+    crooSyncStatus: { type: String, enum: ['unlinked', 'linked', 'error'], default: 'unlinked' },
+    crooLastSyncedAt: { type: Date },
   },
   { timestamps: true },
 );

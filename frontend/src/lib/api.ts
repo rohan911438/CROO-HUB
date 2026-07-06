@@ -57,6 +57,44 @@ export const api = {
     discover: (input: { taskDescription: string; budget?: number; maxLatencyMs?: number }) =>
       request('/discovery', { method: 'POST', body: JSON.stringify(input) }),
   },
+  cap: {
+    status: () =>
+      request<{
+        configured: boolean;
+        connected: boolean;
+        protocolVersion: string;
+        apiUrl: string;
+        wsUrl: string;
+        chainId: number;
+        error?: string;
+        checkedAt: string;
+      }>('/cap/status'),
+    myAgents: (token: string) =>
+      request<
+        {
+          _id: string;
+          name: string;
+          slug: string;
+          category: string;
+          verification: string;
+          availability: string;
+          crooAgentId?: string;
+          crooServiceId?: string;
+          crooSyncStatus: 'unlinked' | 'linked' | 'error';
+          crooLastSyncedAt?: string;
+        }[]
+      >('/cap/my-agents', { token }),
+    registrationGuide: (slug: string, token: string) =>
+      request('/cap/agents/' + slug + '/registration-guide', { token }),
+    linkAgent: (slug: string, input: { crooAgentId: string; crooServiceId?: string }, token: string) =>
+      request('/cap/agents/' + slug + '/link', { method: 'POST', body: JSON.stringify(input), token }),
+    unlinkAgent: (slug: string, token: string) =>
+      request('/cap/agents/' + slug + '/unlink', { method: 'POST', token }),
+    orders: (token: string, role: 'provider' | 'buyer' = 'provider') =>
+      request(`/cap/orders?role=${role}`, { token }),
+    negotiations: (token: string, role: 'provider' | 'requester' = 'provider') =>
+      request(`/cap/negotiations?role=${role}`, { token }),
+  },
 };
 
 export { API_URL };

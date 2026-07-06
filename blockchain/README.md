@@ -14,16 +14,21 @@ chain id `84532`).
 
 ## 0. Live deployment (Base Sepolia)
 
-Deployed and wired end-to-end on **2026-07-06** (block-confirmed on-chain, not just compiled).
+Deployed and wired end-to-end on **2026-07-06**, independently confirmed via Basescan's public
+explorer (6 transactions from the deployer: 5 contract creations + 1 role grant, all visible at
+[the deployer's address](https://sepolia.basescan.org/address/0xb7fE3218d2c9a90Dc59bd966483C65F66FAD589C)).
 Full record with constructor args: [`deployments/baseSepolia.json`](deployments/baseSepolia.json).
 
-| Contract | Address | Explorer |
-|---|---|---|
-| AgentRegistry | `0x4063747fEeb712Ab0E5F4Ca1285D3C899AA5CcE0` | [view](https://sepolia.basescan.org/address/0x4063747fEeb712Ab0E5F4Ca1285D3C899AA5CcE0) |
-| Reputation | `0x5d06e234368359DeE43a2be089ACc7B1ee6Cf6B3` | [view](https://sepolia.basescan.org/address/0x5d06e234368359DeE43a2be089ACc7B1ee6Cf6B3) |
-| EscrowCommerce | `0xe81D5902e9745C12F36347433649da031F4d268B` | [view](https://sepolia.basescan.org/address/0xe81D5902e9745C12F36347433649da031F4d268B) |
-| OrchestrationMetadata | `0x0b4223248bcBde8809b6DE111758CA37f40930Bc` | [view](https://sepolia.basescan.org/address/0x0b4223248bcBde8809b6DE111758CA37f40930Bc) |
-| MockUSDC (test token) | `0x31bAc56682643857d32896c3d5D3c610E00E3729` | [view](https://sepolia.basescan.org/address/0x31bAc56682643857d32896c3d5D3c610E00E3729) |
+| Contract | Address | Deployment tx | Explorer |
+|---|---|---|---|
+| MockUSDC (test token) | `0x31bAc56682643857d32896c3d5D3c610E00E3729` | [`0x6ac0111...c1c77d17d`](https://sepolia.basescan.org/tx/0x6ac011101e2a9bb2dc213686d591052bea2cf93b7cfd42f43f99a9cc1c77d17d) | [view](https://sepolia.basescan.org/address/0x31bAc56682643857d32896c3d5D3c610E00E3729) |
+| AgentRegistry | `0x4063747fEeb712Ab0E5F4Ca1285D3C899AA5CcE0` | [`0x2a3f37b...fa73ff35d`](https://sepolia.basescan.org/tx/0x2a3f37bf9769c36a1b535a45a68fab25a03e3bd6defb833fdb02101fa73ff35d) | [view](https://sepolia.basescan.org/address/0x4063747fEeb712Ab0E5F4Ca1285D3C899AA5CcE0) |
+| Reputation | `0x5d06e234368359DeE43a2be089ACc7B1ee6Cf6B3` | [`0xd22e17f...db97a34c66`](https://sepolia.basescan.org/tx/0xd22e17f7dc1cdb30e1be03e843b97ff2b55aeac87062d98864d704db97a34c66) | [view](https://sepolia.basescan.org/address/0x5d06e234368359DeE43a2be089ACc7B1ee6Cf6B3) |
+| EscrowCommerce | `0xe81D5902e9745C12F36347433649da031F4d268B` | [`0xac15e6c...b961f104d2`](https://sepolia.basescan.org/tx/0xac15e6c6f9ed65140243c89ef0121320502965c6df4d597b604ab9b961f104d2) | [view](https://sepolia.basescan.org/address/0xe81D5902e9745C12F36347433649da031F4d268B) |
+| OrchestrationMetadata | `0x0b4223248bcBde8809b6DE111758CA37f40930Bc` | [`0xc41b256...698eacf4325`](https://sepolia.basescan.org/tx/0xc41b2564f6661516b9fcee8d0b3ca12d3b8d6424af589cb77d2ec698eacf4325) | [view](https://sepolia.basescan.org/address/0x0b4223248bcBde8809b6DE111758CA37f40930Bc) |
+
+Role wiring tx (`Reputation.grantRole(RECORDER_ROLE, EscrowCommerce)`):
+[`0x8a3faa5...a31d29fc1`](https://sepolia.basescan.org/tx/0x8a3faa5762cba6df963d25177d5edf0b9335bee12d0842753918b05a31d29fc1)
 
 - **Admin / deployer**: `0xb7fE3218d2c9a90Dc59bd966483C65F66FAD589C` — a throwaway deployment key
   generated solely for this testnet rollout, holding `DEFAULT_ADMIN_ROLE`, `VERIFIER_ROLE`

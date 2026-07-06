@@ -22,6 +22,7 @@ import {
   Bot,
   ChevronsLeft,
   ChevronsRight,
+  Network,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
@@ -42,6 +43,7 @@ const nav = [
   { section: 'Developer', items: [
     { href: '/api-keys', label: 'API Keys', icon: KeyRound },
     { href: '/dev-console', label: 'Developer Console', icon: Terminal },
+    { href: '/croo-integration', label: 'CROO Integration', icon: Network },
   ]},
   { section: 'Account', items: [
     { href: '/notifications', label: 'Notifications', icon: Bell },
