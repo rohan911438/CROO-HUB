@@ -5,9 +5,11 @@
   "description": "CROO Hub API - lightweight modular backend for the AI Agent Economy",
   "main": "dist/server.js",
   "scripts": {
+    "predev": "node scripts/ensure-mongo.js",
     "dev": "tsx watch src/server.ts",
     "build": "tsc -p tsconfig.json",
     "start": "node dist/server.js",
+    "preseed": "node scripts/ensure-mongo.js",
     "seed": "tsx src/seed/seed.ts",
     "seed:destroy": "tsx src/seed/seed.ts --destroy",
     "lint": "eslint \"src/**/*.ts\"",

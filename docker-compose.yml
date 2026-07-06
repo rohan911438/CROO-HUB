@@ -11,6 +11,12 @@ services:
       - mongo_data:/data/db
     environment:
       MONGO_INITDB_DATABASE: croo_hub
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
 
   backend:
     build:
@@ -18,7 +24,8 @@ services:
     container_name: croo-hub-backend
     restart: unless-stopped
     depends_on:
-      - mongo
+      mongo:
+        condition: service_healthy
     ports:
       - "5000:5000"
     environment:
