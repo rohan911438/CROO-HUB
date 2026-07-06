@@ -1,0 +1,46 @@
+{
+  "network": "baseSepolia",
+  "chainId": 84532,
+  "deployer": "0xb7fE3218d2c9a90Dc59bd966483C65F66FAD589C",
+  "admin": "0xb7fE3218d2c9a90Dc59bd966483C65F66FAD589C",
+  "deployedAt": "2026-07-06T13:09:25.700Z",
+  "contracts": {
+    "MockUSDC": {
+      "address": "0x31bAc56682643857d32896c3d5D3c610E00E3729",
+      "args": [
+        "0xb7fE3218d2c9a90Dc59bd966483C65F66FAD589C"
+      ]
+    },
+    "AgentRegistry": {
+      "address": "0x4063747fEeb712Ab0E5F4Ca1285D3C899AA5CcE0",
+      "args": [
+        "0xb7fE3218d2c9a90Dc59bd966483C65F66FAD589C"
+      ]
+    },
+    "Reputation": {
+      "address": "0x5d06e234368359DeE43a2be089ACc7B1ee6Cf6B3",
+      "args": [
+        "0xb7fE3218d2c9a90Dc59bd966483C65F66FAD589C",
+        "0x4063747fEeb712Ab0E5F4Ca1285D3C899AA5CcE0"
+      ]
+    },
+    "EscrowCommerce": {
+      "address": "0xe81D5902e9745C12F36347433649da031F4d268B",
+      "args": [
+        "0xb7fE3218d2c9a90Dc59bd966483C65F66FAD589C",
+        "0x31bAc56682643857d32896c3d5D3c610E00E3729",
+        "0x4063747fEeb712Ab0E5F4Ca1285D3C899AA5CcE0",
+        "0x5d06e234368359DeE43a2be089ACc7B1ee6Cf6B3",
+        "0xb7fE3218d2c9a90Dc59bd966483C65F66FAD589C",
+        0
+      ]
+    },
+    "OrchestrationMetadata": {
+      "address": "0x0b4223248bcBde8809b6DE111758CA37f40930Bc",
+      "args": [
+        "0xb7fE3218d2c9a90Dc59bd966483C65F66FAD589C",
+        "0x4063747fEeb712Ab0E5F4Ca1285D3C899AA5CcE0"
+      ]
+    }
+  }
+}
