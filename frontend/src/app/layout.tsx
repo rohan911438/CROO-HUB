@@ -4,6 +4,7 @@ import './globals.css';
 import { ThemeProvider } from '@/components/shared/theme-provider';
 import { Web3Provider } from '@/components/shared/web3-provider';
 import { WalletAuthBridge } from '@/components/shared/wallet-auth-bridge';
+import { EXTENSION_ERROR_GUARD_SCRIPT } from '@/components/shared/extension-error-guard';
 import { Toaster } from 'sonner';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
@@ -18,6 +19,9 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <script suppressHydrationWarning dangerouslySetInnerHTML={{ __html: EXTENSION_ERROR_GUARD_SCRIPT }} />
+      </head>
       <body className={`${inter.variable} ${mono.variable} font-sans antialiased`}>
         <ThemeProvider>
           <Web3Provider>

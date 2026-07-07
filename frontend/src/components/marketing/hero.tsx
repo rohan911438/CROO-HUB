@@ -56,7 +56,7 @@ export function Hero() {
             className="mt-8 flex flex-col gap-3 sm:flex-row"
           >
             <Button size="lg" variant="gradient" asChild>
-              <Link href="/sign-up">
+              <Link href="/dashboard">
                 Start building free <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>

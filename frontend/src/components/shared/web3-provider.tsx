@@ -7,7 +7,6 @@ import { RainbowKitProvider, darkTheme, lightTheme } from '@rainbow-me/rainbowki
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useTheme } from 'next-themes';
 import { wagmiConfig } from '@/lib/wagmi';
-import { ExtensionErrorGuard } from './extension-error-guard';
 
 const queryClient = new QueryClient();
 
@@ -32,10 +31,7 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
   return (
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitThemeBridge>
-          <ExtensionErrorGuard />
-          {children}
-        </RainbowKitThemeBridge>
+        <RainbowKitThemeBridge>{children}</RainbowKitThemeBridge>
       </QueryClientProvider>
     </WagmiProvider>
   );
