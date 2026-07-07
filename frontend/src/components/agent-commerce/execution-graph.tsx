@@ -20,7 +20,7 @@ export function ExecutionGraph({ order }: { order: AgentOrder }) {
         id: s.key,
         type: 'stage',
         position: { x: i * 190, y: 0 },
-        data: { label: s.label, status: s.status, timestamp: s.timestamp, durationLabel: s.durationLabel },
+        data: { label: s.label, status: s.status, timestamp: s.timestamp, durationLabel: s.durationLabel, badge: s.badge },
         draggable: false,
         selectable: true,
       })),

@@ -1,18 +1,21 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import ReactFlow, {
-  Background, BackgroundVariant, Controls, Node, Edge, ReactFlowProvider, MarkerType,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+import dynamic from 'next/dynamic';
+import type { Node, Edge } from 'reactflow';
+import { MarkerType } from 'reactflow';
 import {
   Globe, Wallet, Server, Database, Workflow, Compass, ShieldCheck, Link2, Network, Store, LucideIcon,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { LayerNode, LayerCategory } from '@/components/architecture/layer-node';
+import type { LayerCategory } from '@/components/architecture/layer-node';
 
-const nodeTypes = { layer: LayerNode };
+const ArchitectureDiagram = dynamic(
+  () => import('@/components/architecture/architecture-diagram').then((m) => m.ArchitectureDiagram),
+  { ssr: false, loading: () => <Skeleton className="h-full w-full" /> },
+);
 
 interface LayerInfo {
   id: string;
@@ -189,7 +192,7 @@ export default function ArchitecturePage() {
       <div>
         <h2 className="text-xl font-semibold tracking-tight">Architecture</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          How CROO Hub's frontend, backend, MongoDB, Planner, Discovery Engine, deployed smart contracts, and the
+          How CROO Hub&apos;s frontend, backend, MongoDB, Planner, Discovery Engine, deployed smart contracts, and the
           external CROO Network (CAP) fit together. Click any node for details.
         </p>
       </div>
@@ -211,22 +214,7 @@ export default function ArchitecturePage() {
 
       <Card className="overflow-hidden p-0">
         <div className="h-[560px]">
-          <ReactFlowProvider>
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              nodeTypes={nodeTypes}
-              onNodeClick={(_, node) => setSelectedId(node.id)}
-              fitView
-              fitViewOptions={{ padding: 0.2 }}
-              proOptions={{ hideAttribution: true }}
-              nodesDraggable={false}
-              nodesConnectable={false}
-            >
-              <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="hsl(var(--border))" />
-              <Controls className="!bottom-4 !left-4" showInteractive={false} />
-            </ReactFlow>
-          </ReactFlowProvider>
+          <ArchitectureDiagram nodes={nodes} edges={edges} onNodeClick={setSelectedId} />
         </div>
       </Card>
 

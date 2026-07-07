@@ -2,14 +2,13 @@
 
 import { useParams, useRouter } from 'next/navigation';
 import { useState } from 'react';
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip, ResponsiveContainer, BarChart, Bar,
-} from 'recharts';
+import dynamic from 'next/dynamic';
 import {
   Bookmark, Star, CheckCircle2, Clock, Zap, ArrowLeft, Copy, ExternalLink, Puzzle, Server, GitCommitHorizontal,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,6 +17,19 @@ import { VerificationBadge, AvailabilityDot } from '@/components/dashboard/badge
 import { mockAgents, mockReviews, reputationHistory } from '@/lib/mock-data';
 import { cn, formatNumber, initials } from '@/lib/utils';
 import { toast } from 'sonner';
+
+const AgentPerformanceCharts = dynamic(
+  () => import('@/components/marketplace/agent-performance-charts').then((m) => m.AgentPerformanceCharts),
+  {
+    ssr: false,
+    loading: () => (
+      <>
+        <Card><CardContent className="h-64 pt-6"><Skeleton className="h-full w-full" /></CardContent></Card>
+        <Card><CardContent className="h-64 pt-6"><Skeleton className="h-full w-full" /></CardContent></Card>
+      </>
+    ),
+  },
+);
 
 export default function AgentDetailPage() {
   const params = useParams<{ slug: string }>();
@@ -133,35 +145,7 @@ export default function AgentDetailPage() {
         </TabsContent>
 
         <TabsContent value="performance" className="grid gap-6 lg:grid-cols-2">
-          <Card>
-            <CardHeader><CardTitle>Reputation history</CardTitle><CardDescription>Trailing 12 months</CardDescription></CardHeader>
-            <CardContent className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={reputationHistory}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                  <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" domain={[50, 100]} />
-                  <ChartTooltip contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
-                  <Line type="monotone" dataKey="score" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader><CardTitle>Pricing history</CardTitle><CardDescription>Per-task cost over time</CardDescription></CardHeader>
-            <CardContent className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={pricingHistory}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                  <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                  <ChartTooltip contentStyle={{ background: 'hsl(var(--popover))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }} />
-                  <Bar dataKey="price" fill="hsl(var(--primary) / 0.7)" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </CardContent>
-          </Card>
+          <AgentPerformanceCharts reputationHistory={reputationHistory} pricingHistory={pricingHistory} />
 
           <Card className="lg:col-span-2">
             <CardHeader><CardTitle>Recent activity</CardTitle></CardHeader>

@@ -115,7 +115,7 @@ export interface Transaction {
   status: 'pending' | 'processing' | 'completed' | 'failed' | 'refunded' | 'escrow_hold';
   description: string;
   invoiceNumber: string;
-  settlementMethod: 'placeholder_offchain' | 'on_chain_pending';
+  settlementMethod: 'placeholder_offchain' | 'on_chain_pending' | 'on_chain_settled';
   escrow: { isEscrow: boolean; releaseCondition?: string };
   createdAt: string;
 }
@@ -140,6 +140,7 @@ export interface OrderEvent {
   type: string;
   level: 'info' | 'success' | 'warning' | 'error';
   message: string;
+  meta?: Record<string, unknown>;
 }
 
 export interface ReasoningFactor {
@@ -160,12 +161,27 @@ export interface ReasoningReport {
 export interface OrderCandidate {
   slug: string;
   name: string;
+  avatarUrl?: string;
   matchScore: number;
   trustScore: number;
   estimatedCostUsd: number;
   reasoning: string;
   chosen: boolean;
   reasoningReport?: ReasoningReport;
+}
+
+export interface ExecutionPlanStep {
+  label: string;
+  agentSlug: string;
+  estimatedDurationMs: number;
+  estimatedCostUsd: number;
+}
+
+export interface ExecutionPlan {
+  steps: ExecutionPlanStep[];
+  totalEstimatedDurationMs: number;
+  totalEstimatedCostUsd: number;
+  computedAt: string;
 }
 
 export interface AgentOrder {
@@ -176,6 +192,7 @@ export interface AgentOrder {
   requestedMode: 'auto' | 'live' | 'simulated';
   status: OrderStatus;
   candidates: OrderCandidate[];
+  executionPlan?: ExecutionPlan;
   cap: { negotiationId?: string; orderId?: string; protocolVersion: string };
   settlement: { amountUsdc?: number; feeUsdc?: number; payTxHash?: string; deliverTxHash?: string; clearTxHash?: string };
   result?: { deliverableType: string; deliverableText?: string; contentHash?: string };

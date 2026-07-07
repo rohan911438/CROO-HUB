@@ -53,12 +53,27 @@ export interface IOrderCandidate {
   agentId: Types.ObjectId;
   slug: string;
   name: string;
+  avatarUrl?: string;
   matchScore: number;
   trustScore: number;
   estimatedCostUsd: number;
   reasoning: string;
   chosen: boolean;
   reasoningReport?: IReasoningReport;
+}
+
+export interface IExecutionPlanStep {
+  label: string;
+  agentSlug: string;
+  estimatedDurationMs: number;
+  estimatedCostUsd: number;
+}
+
+export interface IExecutionPlan {
+  steps: IExecutionPlanStep[];
+  totalEstimatedDurationMs: number;
+  totalEstimatedCostUsd: number;
+  computedAt: Date;
 }
 
 export interface IAgentOrder extends Document {
@@ -72,6 +87,7 @@ export interface IAgentOrder extends Document {
   status: OrderStatus;
   candidates: IOrderCandidate[];
   selectedAgent?: Types.ObjectId;
+  executionPlan?: IExecutionPlan;
   cap: {
     negotiationId?: string;
     orderId?: string;
@@ -148,12 +164,33 @@ const orderCandidateSchema = new Schema<IOrderCandidate>(
     agentId: { type: Schema.Types.ObjectId, ref: 'Agent', required: true },
     slug: { type: String, required: true },
     name: { type: String, required: true },
+    avatarUrl: { type: String },
     matchScore: { type: Number, required: true },
     trustScore: { type: Number, required: true },
     estimatedCostUsd: { type: Number, required: true },
     reasoning: { type: String, required: true },
     chosen: { type: Boolean, default: false },
     reasoningReport: { type: reasoningReportSchema },
+  },
+  { _id: false },
+);
+
+const executionPlanStepSchema = new Schema<IExecutionPlanStep>(
+  {
+    label: { type: String, required: true },
+    agentSlug: { type: String, required: true },
+    estimatedDurationMs: { type: Number, required: true },
+    estimatedCostUsd: { type: Number, required: true },
+  },
+  { _id: false },
+);
+
+const executionPlanSchema = new Schema<IExecutionPlan>(
+  {
+    steps: [executionPlanStepSchema],
+    totalEstimatedDurationMs: { type: Number, required: true },
+    totalEstimatedCostUsd: { type: Number, required: true },
+    computedAt: { type: Date, required: true },
   },
   { _id: false },
 );
@@ -174,6 +211,7 @@ const agentOrderSchema = new Schema<IAgentOrder>(
     },
     candidates: [orderCandidateSchema],
     selectedAgent: { type: Schema.Types.ObjectId, ref: 'Agent' },
+    executionPlan: { type: executionPlanSchema },
     cap: {
       negotiationId: { type: String },
       orderId: { type: String },

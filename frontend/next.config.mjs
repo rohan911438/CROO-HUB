@@ -6,6 +6,9 @@ const nextConfig = {
       { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
   },
+  experimental: {
+    optimizePackageImports: ['lucide-react', 'recharts', 'framer-motion', 'reactflow'],
+  },
   async redirects() {
     return [{ source: '/sign-in', destination: '/', permanent: false }];
   },

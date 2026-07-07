@@ -25,12 +25,18 @@ export interface StageNodeData {
   status: StageStatus;
   timestamp?: string;
   durationLabel?: string;
+  badge?: string;
 }
 
 export function StageNode({ data }: NodeProps<StageNodeData>) {
   const Icon = STATUS_ICON[data.status];
   return (
-    <div className={cn('w-40 rounded-xl border p-2.5 shadow-soft transition-colors', STATUS_STYLE[data.status])}>
+    <div className={cn('relative w-40 rounded-xl border p-2.5 shadow-soft transition-all duration-500 ease-out', STATUS_STYLE[data.status])}>
+      {data.badge && (
+        <span className="absolute -top-2 right-2 rounded-full border border-warning/50 bg-warning/15 px-1.5 py-0.5 text-[9px] font-medium text-warning">
+          {data.badge}
+        </span>
+      )}
       <Handle type="target" position={Position.Left} className="!h-2 !w-2 !border-primary !bg-background" />
       <div className="flex items-center gap-2">
         <Icon className={cn('h-3.5 w-3.5 shrink-0', data.status === 'active' && 'animate-spin')} />

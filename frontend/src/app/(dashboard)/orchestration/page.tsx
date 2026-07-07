@@ -1,11 +1,9 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
-import ReactFlow, {
-  Background, Controls, MiniMap, addEdge, useNodesState, useEdgesState,
-  Connection, Edge, Node, ReactFlowProvider, ReactFlowInstance, BackgroundVariant,
-} from 'reactflow';
-import 'reactflow/dist/style.css';
+import dynamic from 'next/dynamic';
+import { addEdge, useNodesState, useEdgesState } from 'reactflow';
+import type { Connection, Edge, Node, ReactFlowInstance } from 'reactflow';
 import { motion } from 'framer-motion';
 import {
   Workflow, Search, ShieldCheck, Link2, ScanText, Languages, Database, Play, Save,
@@ -13,6 +11,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
@@ -23,11 +22,13 @@ import {
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
 } from '@/components/ui/dialog';
-import { StudioNode } from '@/components/orchestration/studio-node';
 import { mockAgents, mockTemplates } from '@/lib/mock-data';
 import { toast } from 'sonner';
 
-const nodeTypes = { studioNode: StudioNode };
+const OrchestrationCanvas = dynamic(
+  () => import('@/components/orchestration/orchestration-canvas').then((m) => m.OrchestrationCanvas),
+  { ssr: false, loading: () => <Skeleton className="h-full w-full" /> },
+);
 
 const palette = [
   { type: 'planner', label: 'Planner Agent', icon: Workflow, agentSlug: 'nomad-planner-agent' },
@@ -167,31 +168,16 @@ export default function OrchestrationPage() {
         </Card>
 
         <Card className="relative col-span-12 min-h-[420px] overflow-hidden p-0 lg:col-span-7">
-          <ReactFlowProvider>
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onConnect={onConnect}
-              onInit={(instance) => (rfInstance.current = instance)}
-              onNodeClick={(_, node) => setSelectedNode(node)}
-              onPaneClick={() => setSelectedNode(null)}
-              nodeTypes={nodeTypes}
-              fitView
-              proOptions={{ hideAttribution: true }}
-            >
-              <Background variant={BackgroundVariant.Dots} gap={20} size={1} color="hsl(var(--border))" />
-              <Controls className="!bottom-4 !left-4" showInteractive={false} />
-              <MiniMap
-                pannable
-                zoomable
-                maskColor="hsl(var(--background) / 0.6)"
-                nodeColor="hsl(var(--primary) / 0.6)"
-                className="!bg-card"
-              />
-            </ReactFlow>
-          </ReactFlowProvider>
+          <OrchestrationCanvas
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onInit={(instance) => (rfInstance.current = instance)}
+            onNodeClick={(node) => setSelectedNode(node)}
+            onPaneClick={() => setSelectedNode(null)}
+          />
         </Card>
 
         <Card className="col-span-12 flex flex-col overflow-hidden p-0 lg:col-span-3">

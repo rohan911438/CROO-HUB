@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
+import { motion } from 'framer-motion';
 import {
   Handshake,
   Plus,
@@ -14,6 +15,8 @@ import {
   ShieldCheck,
   Clock,
   Link2,
+  ListChecks,
+  Route,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +34,13 @@ import { api, ApiError } from '@/lib/api';
 import { getAccessToken } from '@/lib/auth';
 import { AgentOrder, OrderStatus } from '@/types';
 import { ExecutionGraph } from '@/components/agent-commerce/execution-graph';
+import { computeExecutionStages } from '@/lib/executionStages';
+
+const fadeIn = {
+  initial: { opacity: 0, y: 8 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.3 },
+};
 
 const TERMINAL: OrderStatus[] = ['completed', 'rejected', 'expired', 'failed', 'cancelled'];
 
@@ -60,6 +70,21 @@ export default function AgentCommercePage() {
   const [error, setError] = useState<string | null>(null);
   const token = typeof window !== 'undefined' ? getAccessToken() : null;
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const stages = useMemo(() => (selected ? computeExecutionStages(selected) : []), [selected]);
+  const stageStatus = useCallback(
+    (key: string) => stages.find((s) => s.key === key)?.status ?? 'pending',
+    [stages],
+  );
+  const reroutedToSlugs = useMemo(
+    () =>
+      new Set(
+        (selected?.events ?? [])
+          .filter((e) => e.type === 'candidate_rerouted' && typeof e.meta?.toSlug === 'string')
+          .map((e) => e.meta!.toSlug as string),
+      ),
+    [selected],
+  );
 
   const loadOrders = useCallback(async () => {
     if (!token) return;
@@ -215,8 +240,36 @@ export default function AgentCommercePage() {
                   <ExecutionGraph order={selected} />
                 </div>
 
-                {selected.candidates.length > 0 && (
-                  <div>
+                {selected.executionPlan && (
+                  <motion.div {...fadeIn}>
+                    <div className="mb-2 flex items-center justify-between text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      <span className="flex items-center gap-1.5"><ListChecks className="h-3.5 w-3.5" /> Execution plan</span>
+                      <span className="normal-case text-muted-foreground/70">Estimated before execution starts</span>
+                    </div>
+                    <div className="space-y-1.5 rounded-lg border border-border p-3 text-xs">
+                      {selected.executionPlan.steps.map((step, i) => (
+                        <div key={`${step.label}-${i}`} className="flex items-center justify-between text-muted-foreground">
+                          <span className="text-foreground/80">{step.label}</span>
+                          <span className="font-mono">
+                            ~{(step.estimatedDurationMs / 1000).toFixed(1)}s
+                            {step.estimatedCostUsd > 0 ? ` · $${step.estimatedCostUsd.toFixed(2)}` : ''}
+                          </span>
+                        </div>
+                      ))}
+                      <Separator />
+                      <div className="flex items-center justify-between font-medium text-foreground">
+                        <span>Total estimate</span>
+                        <span className="font-mono">
+                          ~{(selected.executionPlan.totalEstimatedDurationMs / 1000).toFixed(1)}s · $
+                          {selected.executionPlan.totalEstimatedCostUsd.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {selected.candidates.length > 0 && stageStatus('ranking') !== 'pending' && (
+                  <motion.div {...fadeIn}>
                     <div className="mb-2 flex items-center justify-between text-xs font-medium uppercase tracking-wide text-muted-foreground">
                       <span>Planner reasoning</span>
                       <span className="normal-case text-muted-foreground/70">Why this agent, not the runners-up</span>
@@ -232,6 +285,11 @@ export default function AgentCommercePage() {
                                 {c.reasoningReport && (
                                   <Badge variant={c.chosen ? 'success' : 'outline'} className="text-[10px]">
                                     {c.reasoningReport.confidenceScore}% confidence
+                                  </Badge>
+                                )}
+                                {reroutedToSlugs.has(c.slug) && (
+                                  <Badge variant="warning" className="gap-1 text-[10px]">
+                                    <Route className="h-2.5 w-2.5" /> Rerouted here
                                   </Badge>
                                 )}
                               </div>
@@ -269,7 +327,7 @@ export default function AgentCommercePage() {
                         </AccordionItem>
                       ))}
                     </Accordion>
-                  </div>
+                  </motion.div>
                 )}
 
                 <div>
@@ -293,27 +351,31 @@ export default function AgentCommercePage() {
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="rounded-lg border border-border p-3 text-xs">
-                    <div className="mb-1.5 flex items-center gap-1.5 font-medium"><Clock className="h-3.5 w-3.5" /> Settlement</div>
-                    <div className="space-y-1 text-muted-foreground">
-                      <div>Amount: {selected.settlement.amountUsdc ? `$${selected.settlement.amountUsdc.toFixed(2)}` : '—'}</div>
-                      <div>Fee: {selected.settlement.feeUsdc ? `$${selected.settlement.feeUsdc.toFixed(2)}` : '—'}</div>
-                      <div>Latency: {selected.latencyMs ? `${(selected.latencyMs / 1000).toFixed(1)}s` : '—'}</div>
-                    </div>
-                  </div>
-                  <div className="rounded-lg border border-border p-3 text-xs">
-                    <div className="mb-1.5 flex items-center gap-1.5 font-medium"><Link2 className="h-3.5 w-3.5" /> On-chain proof</div>
-                    {selected.onchainProof ? (
+                  {stageStatus('settlement') !== 'pending' && (
+                    <motion.div {...fadeIn} className="rounded-lg border border-border p-3 text-xs">
+                      <div className="mb-1.5 flex items-center gap-1.5 font-medium"><Clock className="h-3.5 w-3.5" /> Settlement</div>
                       <div className="space-y-1 text-muted-foreground">
-                        <div>{selected.onchainProof.network}, execution #{selected.onchainProof.executionId}</div>
-                        <a href={selected.onchainProof.explorerUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-primary hover:underline">
-                          View on Basescan <ExternalLink className="h-3 w-3" />
-                        </a>
+                        <div>Amount: {selected.settlement?.amountUsdc ? `$${selected.settlement.amountUsdc.toFixed(2)}` : '—'}</div>
+                        <div>Fee: {selected.settlement?.feeUsdc ? `$${selected.settlement.feeUsdc.toFixed(2)}` : '—'}</div>
+                        <div>Latency: {selected.latencyMs ? `${(selected.latencyMs / 1000).toFixed(1)}s` : '—'}</div>
                       </div>
-                    ) : (
-                      <p className="text-muted-foreground">Not yet anchored{TERMINAL.includes(selected.status) && selected.status !== 'completed' ? ' (order did not complete)' : '…'}</p>
-                    )}
-                  </div>
+                    </motion.div>
+                  )}
+                  {stageStatus('onchain') !== 'pending' && (
+                    <motion.div {...fadeIn} className="rounded-lg border border-border p-3 text-xs">
+                      <div className="mb-1.5 flex items-center gap-1.5 font-medium"><Link2 className="h-3.5 w-3.5" /> On-chain proof</div>
+                      {selected.onchainProof ? (
+                        <div className="space-y-1 text-muted-foreground">
+                          <div>{selected.onchainProof.network}, execution #{selected.onchainProof.executionId}</div>
+                          <a href={selected.onchainProof.explorerUrl} target="_blank" rel="noreferrer" className="flex items-center gap-1 text-primary hover:underline">
+                            View on Basescan <ExternalLink className="h-3 w-3" />
+                          </a>
+                        </div>
+                      ) : (
+                        <p className="text-muted-foreground">Not yet anchored{TERMINAL.includes(selected.status) && selected.status !== 'completed' ? ' (order did not complete)' : '…'}</p>
+                      )}
+                    </motion.div>
+                  )}
                 </div>
 
                 {selected.result?.deliverableText && (

@@ -9,6 +9,7 @@ export interface ExecutionStage {
   durationLabel?: string;
   detail: string;
   link?: string;
+  badge?: string;
 }
 
 function findEvent(events: OrderEvent[], types: string[]): OrderEvent | undefined {
@@ -42,6 +43,7 @@ export function computeExecutionStages(order: AgentOrder): ExecutionStage[] {
   const anchorSkippedOrFailed = findEvent(events, ['onchain_anchor_failed', 'onchain_anchor_skipped']);
   const reputationUpdated = findEvent(events, ['reputation_updated']);
   const chosenCandidate = order.candidates.find((c) => c.chosen);
+  const reroutes = events.filter((e) => e.type === 'candidate_rerouted');
 
   const stages: ExecutionStage[] = [];
 
@@ -84,7 +86,12 @@ export function computeExecutionStages(order: AgentOrder): ExecutionStage[] {
     label: 'Selected Agent',
     status: chosenCandidate ? 'done' : 'pending',
     timestamp: discoveryDone?.timestamp,
-    detail: chosenCandidate ? `"${chosenCandidate.name}" selected as provider (${order.executionMode} mode).` : 'No agent selected yet.',
+    detail: chosenCandidate
+      ? `"${chosenCandidate.name}" selected as provider (${order.executionMode} mode).${
+          reroutes.length ? ` ${reroutes.map((e) => e.message).join(' ')}` : ''
+        }`
+      : 'No agent selected yet.',
+    badge: reroutes.length ? 'Rerouted' : undefined,
   });
 
   stages.push({
@@ -102,7 +109,7 @@ export function computeExecutionStages(order: AgentOrder): ExecutionStage[] {
     timestamp: (completed ?? paid)?.timestamp,
     detail:
       (completed ?? paid)?.message ??
-      (order.settlement.amountUsdc ? `$${order.settlement.amountUsdc.toFixed(2)} pending escrow.` : 'Awaiting payment escrow.'),
+      (order.settlement?.amountUsdc ? `$${order.settlement.amountUsdc.toFixed(2)} pending escrow.` : 'Awaiting payment escrow.'),
   });
 
   stages.push({

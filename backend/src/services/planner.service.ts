@@ -7,6 +7,8 @@ import { appendEvent, setStatus } from './planner/orderContext';
 import { runSimulatedExecution } from './planner/simulatedExecutor';
 import { runLiveExecution, LiveExecutionUnavailable } from './planner/liveExecutor';
 import { buildReasoningReport } from './planner/reasoning';
+import { selectDispatchCandidate } from './planner/orchestrator';
+import { buildExecutionPlan } from './planner/executionPlan';
 import { recordOrderOutcome } from './reputationAnalytics.service';
 import {
   anchorExecution,
@@ -99,6 +101,7 @@ async function runOrder(orderId: string): Promise<void> {
         agentId: new Types.ObjectId(m.agentId),
         slug: m.slug,
         name: m.name,
+        avatarUrl: m.avatarUrl,
         matchScore: m.matchScore,
         trustScore: m.trustScore,
         estimatedCostUsd: m.estimatedCostUsd,
@@ -108,6 +111,11 @@ async function runOrder(orderId: string): Promise<void> {
       };
     });
     order.selectedAgent = new Types.ObjectId(matches[0].agentId);
+
+    const topAgent = agentById.get(matches[0].agentId);
+    if (topAgent) {
+      order.executionPlan = buildExecutionPlan(matches[0], topAgent);
+    }
     await order.save();
 
     const winnerReport = order.candidates[0].reasoningReport;
@@ -119,8 +127,23 @@ async function runOrder(orderId: string): Promise<void> {
       { candidates: matches.map((m) => ({ slug: m.slug, matchScore: m.matchScore })) },
     );
 
-    const provider = agentById.get(matches[0].agentId) ?? (await Agent.findById(matches[0].agentId));
-    if (!provider) throw new Error('Selected candidate agent no longer exists');
+    const dispatch = await selectDispatchCandidate(order, matches);
+    if (!dispatch) {
+      await appendEvent(
+        order,
+        'no_available_candidate',
+        'All ranked candidates failed pre-dispatch validation (offline or over budget).',
+        'error',
+      );
+      await setStatus(order, 'failed');
+      return;
+    }
+    const provider = dispatch.agent;
+
+    if (dispatch.matchIndex !== 0) {
+      order.executionPlan = buildExecutionPlan(matches[dispatch.matchIndex], dispatch.agent);
+      await appendEvent(order, 'execution_plan_updated', `Execution plan revised for "${dispatch.agent.name}".`, 'info');
+    }
 
     if (order.executionMode === 'live') {
       try {

@@ -151,7 +151,7 @@ export default function CrooIntegrationPage() {
             <Network className="h-5 w-5" /> CROO Integration
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            CROO Hub's connection to CROO Network (CAP) - the decentralized agent commerce protocol on Base.
+            CROO Hub&apos;s connection to CROO Network (CAP) - the decentralized agent commerce protocol on Base.
           </p>
         </div>
         <Button variant="outline" onClick={() => loadStatus()}>
@@ -203,7 +203,7 @@ export default function CrooIntegrationPage() {
       <Card>
         <CardHeader>
           <CardTitle>Supported CAP capabilities</CardTitle>
-          <CardDescription>What CROO Hub's integration currently does (read/settlement-sync only - it never signs on your behalf).</CardDescription>
+          <CardDescription>What CROO Hub&apos;s integration currently does (read/settlement-sync only - it never signs on your behalf).</CardDescription>
         </CardHeader>
         <CardContent className="space-y-1.5">
           {CAP_CAPABILITIES.map((c) => (
@@ -231,7 +231,7 @@ export default function CrooIntegrationPage() {
           ) : !agents ? (
             <div className="space-y-2 p-6"><Skeleton className="h-8 w-full" /><Skeleton className="h-8 w-full" /></div>
           ) : agents.length === 0 ? (
-            <div className="p-6 text-sm text-muted-foreground">You don't own any agents yet.</div>
+            <div className="p-6 text-sm text-muted-foreground">You don&apos;t own any agents yet.</div>
           ) : (
             <Table>
               <TableHeader>
@@ -283,7 +283,7 @@ export default function CrooIntegrationPage() {
       <Dialog open={!!guideAgent} onOpenChange={(open) => !open && setGuideAgent(null)}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle>Publish "{guideAgent?.name}" to the CROO Agent Store</DialogTitle>
+            <DialogTitle>Publish &quot;{guideAgent?.name}&quot; to the CROO Agent Store</DialogTitle>
             <DialogDescription>
               CROO registers agents through its own dashboard, not an API - follow these steps there,
               then paste the resulting IDs back here to link the two systems.
@@ -359,8 +359,8 @@ export default function CrooIntegrationPage() {
         </CardHeader>
         <CardContent className="space-y-2 text-sm text-muted-foreground">
           <p>
-            CAP's escrow (CAPCore/CAPVault) runs on <strong>Base mainnet only</strong> - there is no
-            testnet. CROO Hub's own on-chain contracts (AgentRegistry, EscrowCommerce, Reputation,
+            CAP&apos;s escrow (CAPCore/CAPVault) runs on <strong>Base mainnet only</strong> - there is no
+            testnet. CROO Hub&apos;s own on-chain contracts (AgentRegistry, EscrowCommerce, Reputation,
             OrchestrationMetadata) remain unchanged and continue handling CROO-Hub-native bookings;
             CAP is an additional, parallel settlement rail for agents also listed on the CROO Agent
             Store. See <code>CROO_CAP_COMPATIBILITY_REPORT.md</code> in the repo for the full audit.
