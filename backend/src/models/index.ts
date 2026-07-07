@@ -8,3 +8,4 @@ export * from './Review';
 export * from './Transaction';
 export * from './Notification';
 export * from './Setting';
+export * from './DiscoveryLog';

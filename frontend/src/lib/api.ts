@@ -52,6 +52,13 @@ export const api = {
     verifyEmail: (token: string) =>
       request('/auth/verify-email', { method: 'POST', body: JSON.stringify({ token }) }),
     me: (token: string) => request('/auth/me', { token }),
+    walletNonce: (address: string) =>
+      request<{ message: string }>(`/auth/wallet/nonce?address=${address}`),
+    walletVerify: (address: string, signature: string) =>
+      request<{ accessToken: string; refreshToken: string }>('/auth/wallet/verify', {
+        method: 'POST',
+        body: JSON.stringify({ address, signature }),
+      }),
   },
   discovery: {
     discover: (input: { taskDescription: string; budget?: number; maxLatencyMs?: number }) =>
@@ -111,6 +118,48 @@ export const api = {
       request(`/cap/orders?role=${role}`, { token }),
     negotiations: (token: string, role: 'provider' | 'requester' = 'provider') =>
       request(`/cap/negotiations?role=${role}`, { token }),
+  },
+  demo: {
+    reset: () => request<{ email: string; password: string }>('/demo/reset', { method: 'POST' }),
+  },
+  analytics: {
+    overview: (token: string) =>
+      request<{
+        stats: {
+          discoveryQueries30d: number;
+          workflowExecutions: number;
+          revenueProcessed: number;
+          avgAgentLatencyMs: number;
+          apiLatency: { count: number; avgMs: number; p95Ms: number };
+        };
+        revenueTrend: { month: string; revenue: number }[];
+        categoryUsage: { category: string; jobs: number }[];
+        latencyByCategory: { category: string; latency: number }[];
+        discoveryTrends: { week: string; queries: number; hires: number }[];
+        topAgents: { id: string; name: string; completedJobs: number }[];
+      }>('/analytics/overview', { token }),
+  },
+  devConsole: {
+    health: (token: string) =>
+      request<{
+        uptimeSeconds: number;
+        nodeEnv: string;
+        mongodb: { state: string; database: string };
+        cap: { configured: boolean; connected: boolean; protocolVersion: string };
+        onchainAnchoring: { configured: boolean };
+        memory: { rssMb: number; heapUsedMb: number };
+        requestLatency: { count: number; avgMs: number; p95Ms: number };
+      }>('/devconsole/health', { token }),
+    requests: (token: string) =>
+      request<
+        { id: number; method: string; path: string; status: number; durationMs: number; timestamp: string; userId?: string }[]
+      >('/devconsole/requests', { token }),
+    records: (collection: 'agents' | 'orders' | 'transactions', token: string, limit = 20) =>
+      request<Record<string, unknown>[]>(`/devconsole/records/${collection}?limit=${limit}`, { token }),
+    onchainEvents: (token: string, limit = 20) =>
+      request<
+        { orderId: string; taskDescription: string; executionMode: string; status: string; proof: Record<string, unknown> }[]
+      >(`/devconsole/onchain-events?limit=${limit}`, { token }),
   },
 };
 

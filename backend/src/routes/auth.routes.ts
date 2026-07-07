@@ -9,6 +9,8 @@ import {
   registerSchema,
   resetPasswordSchema,
   verifyEmailSchema,
+  walletNonceSchema,
+  walletVerifySchema,
 } from '../validators/auth.validators';
 
 const router = Router();
@@ -41,5 +43,23 @@ router.post(
   authController.forgotPassword,
 );
 router.post('/reset-password', validate(resetPasswordSchema), authController.resetPassword);
+
+/**
+ * @openapi
+ * /auth/wallet/nonce:
+ *   get:
+ *     summary: Get a one-time message to sign with a connected wallet (SIWE-style)
+ *     tags: [Auth]
+ */
+router.get('/wallet/nonce', authRateLimiter, validate(walletNonceSchema), authController.walletNonce);
+
+/**
+ * @openapi
+ * /auth/wallet/verify:
+ *   post:
+ *     summary: Verify a signed wallet message and receive access/refresh tokens - auto-provisions a User on first sign-in
+ *     tags: [Auth]
+ */
+router.post('/wallet/verify', authRateLimiter, validate(walletVerifySchema), authController.walletVerify);
 
 export default router;

@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import { useDisconnect } from 'wagmi';
 import { Bell, Menu, Search, Settings, LogOut, User, X } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { Sun, Moon } from 'lucide-react';
@@ -19,6 +20,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { mockNotifications } from '@/lib/mock-data';
+import { clearTokens } from '@/lib/auth';
 import { MobileNav } from './mobile-nav';
 import { WalletButton } from '@/components/shared/wallet-button';
 
@@ -42,6 +44,7 @@ const titles: Record<string, string> = {
 export function Topbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { disconnect } = useDisconnect();
   const { theme, setTheme } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -128,7 +131,13 @@ export function Topbar() {
                 <Link href="/settings"><Settings className="h-4 w-4" /> Settings</Link>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => router.push('/sign-in')}>
+              <DropdownMenuItem
+                onClick={() => {
+                  clearTokens();
+                  disconnect();
+                  router.push('/');
+                }}
+              >
                 <LogOut className="h-4 w-4" /> Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>

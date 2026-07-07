@@ -5,7 +5,8 @@ export type UserRole = 'owner' | 'admin' | 'member';
 export interface IUser extends Document {
   name: string;
   email: string;
-  passwordHash: string;
+  passwordHash?: string;
+  walletAddress?: string;
   avatarUrl?: string;
   role: UserRole;
   organization?: Types.ObjectId;
@@ -24,7 +25,8 @@ const userSchema = new Schema<IUser>(
   {
     name: { type: String, required: true, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
-    passwordHash: { type: String, required: true, select: false },
+    passwordHash: { type: String, select: false },
+    walletAddress: { type: String, unique: true, sparse: true, lowercase: true, trim: true },
     avatarUrl: { type: String },
     role: { type: String, enum: ['owner', 'admin', 'member'], default: 'owner' },
     organization: { type: Schema.Types.ObjectId, ref: 'Organization' },

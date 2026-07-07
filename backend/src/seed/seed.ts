@@ -9,12 +9,14 @@ import { Transaction } from '../models/Transaction';
 import { Notification } from '../models/Notification';
 import { Workflow } from '../models/Workflow';
 import { Setting } from '../models/Setting';
+import { AgentOrder } from '../models/AgentOrder';
+import { DiscoveryLog } from '../models/DiscoveryLog';
 import { agentSeedData } from './data/agents';
 import { templateSeedData } from './data/templates';
 
 const shouldDestroyOnly = process.argv.includes('--destroy');
 
-async function destroyAll() {
+export async function destroyAll() {
   await Promise.all([
     User.deleteMany({}),
     Organization.deleteMany({}),
@@ -25,11 +27,13 @@ async function destroyAll() {
     Notification.deleteMany({}),
     Workflow.deleteMany({}),
     Setting.deleteMany({}),
+    AgentOrder.deleteMany({}),
+    DiscoveryLog.deleteMany({}),
   ]);
   console.log('[seed] All collections cleared.');
 }
 
-async function seed() {
+export async function seed() {
   await destroyAll();
 
   const org = await Organization.create({
@@ -137,9 +141,10 @@ async function seed() {
     'failed',
   ];
 
-  for (let i = 0; i < 12; i++) {
+  for (let i = 0; i < 24; i++) {
     const agent = agents[i % agents.length];
     const status = statuses[i % statuses.length];
+    const createdAt = new Date(Date.now() - Math.floor(i / 4) * 30 * 86400000 - (i % 4) * 3 * 86400000);
     await Transaction.create({
       organization: org._id,
       initiator: demoUser._id,
@@ -156,9 +161,58 @@ async function seed() {
         releaseCondition: status === 'escrow_hold' ? 'Job completion confirmed by initiator' : undefined,
         heldAt: status === 'escrow_hold' ? new Date() : undefined,
       },
+      createdAt,
+      updatedAt: createdAt,
     });
   }
-  console.log('[seed] Inserted 12 transactions.');
+  console.log('[seed] Inserted 24 transactions across the last 6 months.');
+
+  const orderStatuses: Array<'completed' | 'accepted' | 'running' | 'rejected'> = ['completed', 'completed', 'accepted', 'running', 'rejected'];
+  for (let i = 0; i < 10; i++) {
+    const agent = agents[(i + 2) % agents.length];
+    const status = orderStatuses[i % orderStatuses.length];
+    const createdAt = new Date(Date.now() - i * 5 * 86400000);
+    const completed = status === 'completed';
+    await AgentOrder.create({
+      owner: demoUser._id,
+      taskDescription: `${agent.category} task via ${agent.name}`,
+      budget: Number((Math.random() * 40 + 5).toFixed(2)),
+      executionMode: 'simulated',
+      requestedMode: 'auto',
+      status,
+      candidates: [
+        { agentId: agent._id, slug: agent.slug, name: agent.name, matchScore: 82, trustScore: 76, estimatedCostUsd: 12.5, reasoning: 'Best keyword + reputation match.', chosen: true },
+      ],
+      selectedAgent: agent._id,
+      settlement: completed ? { amountUsdc: 12.5, feeUsdc: 0.6 } : {},
+      onchainProof: completed
+        ? {
+            network: 'Base Sepolia',
+            contractAddress: '0x0000000000000000000000000000000000dEaD',
+            executionId: String(1000 + i),
+            txHash: `0x${(i + 1).toString(16).padStart(64, '0')}`,
+            explorerUrl: `https://sepolia.basescan.org/tx/0x${(i + 1).toString(16).padStart(64, '0')}`,
+            recordedAt: createdAt,
+          }
+        : undefined,
+      events: [{ timestamp: createdAt, type: 'created', level: 'info', message: 'Order created (simulated).' }],
+      createdAt,
+      updatedAt: createdAt,
+    });
+  }
+  console.log('[seed] Inserted 10 Agent Commerce orders.');
+
+  for (let i = 0; i < 30; i++) {
+    const createdAt = new Date(Date.now() - i * 2 * 86400000);
+    await DiscoveryLog.create({
+      requestedBy: demoUser._id,
+      taskDescription: 'Summarize competitor pricing pages',
+      resultCount: 4 + (i % 5),
+      topMatchScore: 70 + (i % 25),
+      createdAt,
+    });
+  }
+  console.log('[seed] Inserted 30 discovery log entries.');
 
   const notificationSamples: Array<{ type: 'workflow' | 'transaction' | 'reputation' | 'agent' | 'security' | 'system'; title: string; body: string }> = [
     { type: 'workflow', title: 'Workflow run completed', body: '"Weekly Competitive Research" finished successfully with 4/4 steps passing.' },
@@ -189,7 +243,9 @@ async function run() {
   process.exit(0);
 }
 
-run().catch((error) => {
-  console.error('[seed] Failed', error);
-  process.exit(1);
-});
+if (require.main === module) {
+  run().catch((error) => {
+    console.error('[seed] Failed', error);
+    process.exit(1);
+  });
+}

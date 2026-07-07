@@ -56,3 +56,15 @@ export const resetPassword = asyncHandler(async (req: Request, res: Response) =>
   await authService.resetPassword(token, password);
   return ok(res, { message: 'Password has been reset successfully.' });
 });
+
+export const walletNonce = asyncHandler(async (req: Request, res: Response) => {
+  const address = req.query.address as string;
+  const result = authService.getWalletNonce(address);
+  return ok(res, result);
+});
+
+export const walletVerify = asyncHandler(async (req: Request, res: Response) => {
+  const { address, signature } = req.body;
+  const tokens = await authService.verifyWalletSignature(address, signature);
+  return ok(res, tokens);
+});

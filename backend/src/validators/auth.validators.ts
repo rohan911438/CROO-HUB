@@ -36,3 +36,17 @@ export const verifyEmailSchema = z.object({
   query: z.object({}).optional(),
   params: z.object({}).optional(),
 });
+
+const ethAddress = z.string().regex(/^0x[a-fA-F0-9]{40}$/, 'Invalid EVM address');
+
+export const walletNonceSchema = z.object({
+  body: z.object({}).optional(),
+  query: z.object({ address: ethAddress }),
+  params: z.object({}).optional(),
+});
+
+export const walletVerifySchema = z.object({
+  body: z.object({ address: ethAddress, signature: z.string().min(1) }),
+  query: z.object({}).optional(),
+  params: z.object({}).optional(),
+});

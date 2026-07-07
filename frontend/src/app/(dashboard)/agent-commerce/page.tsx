@@ -131,7 +131,7 @@ export default function AgentCommercePage() {
   }
 
   if (!token) {
-    return <div className="p-6 text-sm text-muted-foreground">Sign in to use Agent Commerce.</div>;
+    return <div className="p-6 text-sm text-muted-foreground">Connect your wallet to use Agent Commerce.</div>;
   }
 
   return (

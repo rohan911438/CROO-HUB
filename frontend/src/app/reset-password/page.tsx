@@ -38,7 +38,7 @@ export default function ResetPasswordPage() {
     await new Promise((r) => setTimeout(r, 800));
     setLoading(false);
     toast.success('Password updated', { description: 'You can now sign in with your new password.' });
-    router.push('/sign-in');
+    router.push('/');
   }
 
   return (

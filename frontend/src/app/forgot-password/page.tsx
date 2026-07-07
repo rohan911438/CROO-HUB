@@ -61,8 +61,8 @@ export default function ForgotPasswordPage() {
         </form>
       )}
 
-      <Link href="/sign-in" className="mt-6 flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-        <ArrowLeft className="h-3.5 w-3.5" /> Back to sign in
+      <Link href="/" className="mt-6 flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
+        <ArrowLeft className="h-3.5 w-3.5" /> Back home
       </Link>
     </AuthShell>
   );

@@ -225,7 +225,7 @@ export default function CrooIntegrationPage() {
         </CardHeader>
         <CardContent className="p-0">
           {!token ? (
-            <div className="p-6 text-sm text-muted-foreground">Sign in to view and link your agents.</div>
+            <div className="p-6 text-sm text-muted-foreground">Connect your wallet to view and link your agents.</div>
           ) : agentsError ? (
             <div className="p-6 text-sm text-destructive">{agentsError}</div>
           ) : !agents ? (

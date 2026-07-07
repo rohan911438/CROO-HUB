@@ -1,6 +1,8 @@
 import crypto from 'crypto';
+import { ethers } from 'ethers';
 import { User } from '../models/User';
 import { Setting } from '../models/Setting';
+import { Organization } from '../models/Organization';
 import { AppError } from '../utils/AppError';
 import { comparePassword, hashPassword } from '../utils/hash';
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from '../utils/jwt';
@@ -35,7 +37,7 @@ export async function registerUser(input: RegisterInput) {
 
 export async function loginUser(email: string, password: string) {
   const user = await User.findOne({ email: email.toLowerCase() }).select('+passwordHash');
-  if (!user) {
+  if (!user || !user.passwordHash) {
     throw AppError.unauthorized('Invalid email or password');
   }
 
@@ -103,6 +105,86 @@ export async function requestPasswordReset(email: string) {
   await user.save();
 
   return { token };
+}
+
+/**
+ * SIWE-style wallet authentication: the frontend requests a nonce for an address, signs the
+ * exact returned message with the connected wallet, then posts the signature back for
+ * verification. On first sign-in for an address, a User (+ Organization + Setting) is
+ * auto-provisioned so the connect-wallet flow needs no separate email/password sign-up step.
+ */
+const walletNonces = new Map<string, { message: string; expiresAt: number }>();
+const NONCE_TTL_MS = 5 * 60 * 1000;
+
+function shortAddress(address: string): string {
+  return `${address.slice(0, 6)}…${address.slice(-4)}`;
+}
+
+export function getWalletNonce(address: string) {
+  const normalized = address.toLowerCase();
+  const nonce = crypto.randomBytes(16).toString('hex');
+  const message = [
+    'CROO Hub wants you to sign in with your Ethereum account:',
+    normalized,
+    '',
+    `Nonce: ${nonce}`,
+    `Issued At: ${new Date().toISOString()}`,
+  ].join('\n');
+
+  walletNonces.set(normalized, { message, expiresAt: Date.now() + NONCE_TTL_MS });
+  return { message };
+}
+
+export async function verifyWalletSignature(address: string, signature: string) {
+  const normalized = address.toLowerCase();
+  const entry = walletNonces.get(normalized);
+  if (!entry || entry.expiresAt < Date.now()) {
+    throw AppError.unauthorized('Signing request expired - reconnect your wallet and try again');
+  }
+
+  let recovered: string;
+  try {
+    recovered = ethers.verifyMessage(entry.message, signature);
+  } catch {
+    throw AppError.unauthorized('Invalid signature');
+  }
+
+  if (recovered.toLowerCase() !== normalized) {
+    throw AppError.unauthorized('Signature does not match the connected wallet address');
+  }
+
+  walletNonces.delete(normalized);
+
+  let user = await User.findOne({ walletAddress: normalized });
+  if (!user) {
+    const org = await Organization.create({
+      name: `${shortAddress(normalized)}'s Workspace`,
+      slug: `wallet-${normalized.slice(2, 10)}`,
+      plan: 'free',
+      seats: 1,
+      billingEmail: `${normalized}@wallet.croohub.local`,
+    });
+
+    user = await User.create({
+      name: shortAddress(normalized),
+      email: `${normalized}@wallet.croohub.local`,
+      walletAddress: normalized,
+      role: 'owner',
+      organization: org._id,
+      isEmailVerified: true,
+      onboardingCompleted: true,
+      avatarUrl: `https://api.dicebear.com/7.x/notionists/svg?seed=${normalized}`,
+    });
+
+    org.members = [user._id];
+    await org.save();
+    await Setting.create({ user: user._id });
+  }
+
+  user.lastLoginAt = new Date();
+  await user.save();
+
+  return issueTokens(user.id, user.email, user.role);
 }
 
 export async function resetPassword(token: string, newPassword: string) {

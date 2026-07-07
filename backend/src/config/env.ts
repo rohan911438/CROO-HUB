@@ -43,4 +43,7 @@ export const env = {
     },
   },
   isProduction: process.env.NODE_ENV === 'production',
+  get demoModeEnabled() {
+    return process.env.DEMO_MODE_ENABLED === 'true' || !this.isProduction;
+  },
 };
